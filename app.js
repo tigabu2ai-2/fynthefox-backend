@@ -1,0 +1,47 @@
+const express = require('express');
+require('dotenv').config();
+
+
+const sequelize = require('./databases/pg');
+const models = require('./models/index');
+
+const createRoles = require('./seeders/create_roles')
+const createSuperAdmin = require('./seeders/create_super_admin')
+
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
+const propertiesRoutes = require('./routes/property');
+
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/properties', propertiesRoutes);
+
+async function initializeApp() {
+    try {
+        await sequelize.sync({ alter: false });
+        console.log('Database synced');
+
+        // Seed roles if they don't exist
+        await createRoles();
+
+        // Seed super admin user if it doesn't exist
+        await createSuperAdmin();
+
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        }).on('error', (err) => {
+            console.error('Server error:', err);
+        })
+    } catch (e) {
+        console.error('Error during app initialization:', e);
+        process.exit(1);
+    }
+}
+
+initializeApp();
