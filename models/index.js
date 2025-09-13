@@ -1,0 +1,36 @@
+const User = require('./user');
+const Role = require('./role');
+const Property = require('./property');
+const Address = require('./address');
+const Subscription = require('./subscription');
+const SubscriptionPlan = require('./subscription_plan');
+const TenantInfo = require('./tenant_info');
+
+Address.hasOne(Property, { foreignKey: 'address_id', onDelete: 'SET NULL' });
+Property.belongsTo(Address, { foreignKey: 'address_id' });
+
+User.hasMany(Property, { foreignKey: 'owner_id', onDelete: 'CASCADE' });
+Property.belongsTo(User, { foreignKey: 'owner_id' });
+
+Subscription.hasMany(Property, { foreignKey: 'subscription_id', onDelete: 'SET NULL' });
+Property.belongsTo(Subscription, { foreignKey: 'subscription_id' });
+
+Role.hasMany(User, { foreignKey: 'role_id' });
+User.belongsTo(Role, { foreignKey: 'role_id' });
+
+Property.hasMany(User, { foreignKey: 'property_id', onDelete: 'SET NULL' });
+User.belongsTo(Property, { foreignKey: 'property_id' });
+
+TenantInfo.hasOne(User, { foreignKey: 'tenant_info_id', onDelete: 'SET NULL' });
+User.belongsTo(TenantInfo, { foreignKey: 'tenant_info_id' });
+
+
+module.exports = {
+    User,
+    Role,
+    Property,
+    Address,
+    Subscription,
+    SubscriptionPlan,
+    TenantInfo,
+};
