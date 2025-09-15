@@ -10,13 +10,24 @@ class AuthController {
         try {
             const { email, password } = req.body;
             const tokens = await authService.login(email, password);
+
+            // For secure usage of the refresh token. This will work for web apps.
+            // But for mobile apps, (for now) the refresh token is included in the body.
+            // For future use there will be a new endpoint specific to mobile apps
+
+            res.cookie("refresh_token", tokens.refresh_token, {
+                httpOnly: true,
+                secure: true,
+                samesite: "Strict",
+                path: "/api/auth/refresh-token"
+            })
             return ResponseBuilder.ok(tokens, 'Login successful').send(res);
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)
-                return  responseBuilder.error(e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(e.message).status(e.statusCode).send(res);
             }
-                console.log(e)
+            console.log(e)
 
             return responseBuilder.error().status(500).send(res);
         }
@@ -26,7 +37,13 @@ class AuthController {
         const responseBuilder = new ResponseBuilder();
 
         try {
-            const { refresh_token } = req.body;
+            const authHeader = req.headers['authorization']; // For testing purpose only. Should be removed in production
+
+            // const refresh_token = req.cookies?.refresh_token // Secure way of hanlding refresh token.
+
+            const refresh_token = authHeader && authHeader.split(' ')[1];
+            
+            
             const tokens = await authService.refresh(refresh_token);
             return ResponseBuilder.ok(tokens, 'Token refreshed successfully').send(res);
         } catch (e) {
