@@ -1,25 +1,43 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { Op } = require('sequelize');
+const bcrypt = require('bcrypt')
+const crypto = require('crypto')
+
 
 const { User, Role } = require('../models/index');
 
 const CustomException = require('../exceptions/custom_exception');
 const mailer = require('../utils/mailer');
+const RedisAuthHelper = require('../helpers/redis_auth_helper')
 
 
 class AuthService {
     constructor() {
         this.accessSecret = process.env.ACCESS_TOKEN_SECRET;
         this.refreshSecret = process.env.REFRESH_TOKEN_SECRET;
+        this.accessHashSecret = process.env.ACCESS_TOKEN_HASH_SECRET
+        this.refreshHashSecret = process.env.REFRESH_TOKEN_HASH_SECRET
 
     }
-    generateAccessToken(user) {
-        return jwt.sign({ id: user.id, first_name: user.first_name, last_name: user.last_name, email: user.email, role: user.Role.name }, this.accessSecret, { expiresIn: '10m' });
+    async generateAccessToken(user) {
+        const access_token = jwt.sign({ id: user.id, first_name: user.first_name, last_name: user.last_name, email: user.email, role: user.Role.name }, this.accessSecret, { expiresIn: '10m' });
+
+        const access_hash = crypto.createHmac("sha256", this.accessHashSecret).update(access_token).digest("hex")
+
+        await RedisAuthHelper.saveAccessToken(user.id, access_hash, {})
+
+        return access_token;
     }
 
-    generateRefreshToken(user) {
-        return jwt.sign({ id: user.id }, this.refreshSecret, { expiresIn: '20m' })
+    async generateRefreshToken(user) {
+        const refresh_token = jwt.sign({ id: user.id }, this.refreshSecret, { expiresIn: '20m' })
+
+        const refresh_hash = crypto.createHmac("sha256", this.refreshHashSecret).update(refresh_token).digest("hex")
+
+        await RedisAuthHelper.saveRefreshToken(user.id, refresh_hash, {})
+
+        return refresh_token;
     }
 
 
@@ -35,20 +53,31 @@ class AuthService {
             throw new CustomException('Invalid email or password');
         }
         console.log(user)
-        const accessToken = this.generateAccessToken(user);
-        const refreshToken = this.generateRefreshToken(user);
+        const accessToken = await this.generateAccessToken(user);
+        const refreshToken = await this.generateRefreshToken(user);
 
         return { access_token: accessToken, refresh_token: refreshToken };
     }
 
     async refresh(token) {
-        // Implement Redis to store refresh tokens and check if the token is valid
+
         try {
             const decoded = jwt.verify(token, this.refreshSecret);
-            const user = await User.findByPk(decoded.id);
+            const user = await User.findByPk(decoded.id, {
+                include: {
+                    model: Role,
+                    attributes: ['id', 'name']
+                }
+            });
             if (!user) throw new CustomException('User not found');
-            const accessToken = this.generateAccessToken(user);
-            const refreshToken = this.generateRefreshToken(user);
+            const accessToken = await this.generateAccessToken(user);
+            const refreshToken = await this.generateRefreshToken(user);
+
+            // Revoking the previous refresh token
+            const refresh_hash = crypto.createHmac("sha256", this.refreshHashSecret).update(token).digest("hex")
+
+            await RedisAuthHelper.revokeRefreshToken(user.id, refresh_hash);
+
             return { access_token: accessToken, refresh_token: refreshToken };
         } catch (error) {
             throw new CustomException('Invalid refresh token', 401);
