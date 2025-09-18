@@ -1,0 +1,55 @@
+const { Agent, User } = require('../models/index')
+const CustomException = require('../exceptions/custom_exception')
+const agentService = require('../services/agent_service')
+const userService = require('../services/user_service')
+const ResponseBuilder = require('../utils/response_builder')
+
+class AgentController {
+    async create(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            if (!(await userService.is_property_owner(req.body.owner_id))) {
+                return ResponseBuilder.badRequest('Invalid Propert Owner').send(res)
+            }
+            const agent = await agentService.create(req.body)
+            if (!agent || agent == null) {
+                return responseBuilder.error(null, 'Failed to create agent! Please try again.').status(500).send(res)
+            }
+            return ResponseBuilder.ok(agent, 'Agent created.').send(res);
+
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async generate_api_key(req, res) {
+        const responseBuilder = new ResponseBuilder()
+
+        try {
+            if (!(['super-admin', 'admin'].includes(req.user.role))) {
+                if (!(await userService.is_owner_of_the_agent(req.user.id, req.params.id))) {
+                    return ResponseBuilder.forbidden('You do not have permission to access this resource').send(res);
+                }
+            }
+
+            const api_key = await agentService.generate_agent_api_key(req.params.id)
+            return ResponseBuilder.ok({ api_key: api_key }).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+}
+
+module.exports = new AgentController()
