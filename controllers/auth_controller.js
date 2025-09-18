@@ -25,7 +25,7 @@ class AuthController {
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)
-                return responseBuilder.error(e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
             }
             console.log(e)
 
@@ -48,9 +48,9 @@ class AuthController {
             return ResponseBuilder.ok(tokens, 'Token refreshed successfully').send(res);
         } catch (e) {
             if (e instanceof CustomException) {
-                return responseBuilder.error(e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
             }
-            return responseBuilder.error(e.message).status(500).send(res);
+            return responseBuilder.error(null,e.message).status(500).send(res);
         }
     }
 
@@ -64,7 +64,7 @@ class AuthController {
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)
-                return responseBuilder.error(e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
             }
             console.log(e)
             return responseBuilder.error().status(500).send(res);
@@ -80,9 +80,9 @@ class AuthController {
             return ResponseBuilder.ok(null, message).send(res);
         } catch (e) {
             if (e instanceof CustomException) {
-                return responseBuilder.error(e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
             }
-            return responseBuilder.error(e.message).status(500).send(res);
+            return responseBuilder.error(null,e.message).status(500).send(res);
         }
     }
 

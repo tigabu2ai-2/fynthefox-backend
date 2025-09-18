@@ -13,7 +13,7 @@ class UserController {
             const user = await userService.register(data, 'admin');
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
-            return responseBuilder.error(e.message).status(500).send(res);
+            return responseBuilder.error(null, e.message).status(500).send(res);
         }
     }
 
@@ -25,7 +25,11 @@ class UserController {
             const user = await userService.register(data, 'vendor');
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
-            return responseBuilder.error(e.message).status(500).send(res);
+            console.log(e)
+            if(e instanceof CustomException){
+                return responseBuilder.error(null, e.message).status(500).send(res)
+            }
+            return responseBuilder.error().status(500).send(res);
         }
     }
 
@@ -38,7 +42,7 @@ class UserController {
             const user = await userService.register(data, 'property-owner');
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
-            return responseBuilder.error(e.message).status(500).send(res);
+            return responseBuilder.error(null, e.message).status(500).send(res);
         }
     }
 
@@ -54,7 +58,7 @@ class UserController {
             delete data.floor_number;
             delete data.apartment_number;
 
-            if (await userService.is_property_owner(req.user.id, data.property_id)) {
+            if (await userService.is_owner_of_the_property(req.user.id, data.property_id)) {
                 const user = await userService.register(data, 'property-user');
                 return ResponseBuilder.created(user, 'User registered successfully').send(res);
             } else {
@@ -62,8 +66,44 @@ class UserController {
             }
         }
         catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error(null, e.message).status(500).send(res);
+        }
+    }
 
-            return responseBuilder.error(e.message).status(500).send(res);
+    async fetch_all_property_owner(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try {
+            const owners = await userService.fetch_all_property_owners()
+            return responseBuilder.success({ owners: owners }).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async fetch_all_vendors(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try {
+            const vendors = await userService.fetch_all_vendors()
+            return responseBuilder.success({ vendors: vendors }).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
         }
     }
 }
