@@ -3,6 +3,7 @@ require('dotenv').config();
 
 const ResponseBuilder = require('../utils/response_builder');
 
+
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 function authenticateAccessToken(req, res, next) {
@@ -15,6 +16,8 @@ function authenticateAccessToken(req, res, next) {
         if (err) {
             return ResponseBuilder.unauthorized('Invalid or expired access token').send(res);
         }
+        
+
         req.user = user;
         next();
     });
