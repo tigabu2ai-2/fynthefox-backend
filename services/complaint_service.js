@@ -1,0 +1,255 @@
+const { Complaint, ComplaintLog, User, Role, Property, TenantInfo, Address, VendorInfo } = require('../models/index')
+const CustomException = require('../exceptions/custom_exception');
+const sequelize = require('../databases/pg')
+
+class ComplaintService {
+    async createComplaint(data, agent_id, log_writer_role, log_writer_id) {
+        const complaint = await Complaint.create(data)
+        if (complaint) {
+            const complaint_log_data = {
+                complaint_id: complaint.id,
+                log_type: 'created',
+                detail: {
+                    agent_id: agent_id,
+                    complain: complaint.complain,
+                },
+                current_status: complaint.status,
+                log_writer_role: log_writer_role,
+                log_writer_id: log_writer_id,
+
+            }
+
+            const complaint_log = await ComplaintLog.create(complaint_log_data)
+            return complaint;
+        } else {
+            throw new CustomException('Failed to create complaint! Please try again', 500);
+
+        }
+
+    }
+
+    async assignVendor(complaint_id, vendor_id, log_writer_role, log_writer_id) {
+        const transaction = await sequelize.transaction()
+        const complaint = await Complaint.findByPk(complaint_id)
+        if (!complaint || complaint == null) {
+            throw new CustomException('Complaint not found!')
+        }
+
+        const vendor = await User.findByPk(vendor_id,
+            {
+                include: {
+                    model: Role,
+                    where: {
+                        name: 'vendor'
+                    },
+                },
+                attributes: ['id', 'role_id']
+            })
+        if (!vendor || vendor == null) {
+            throw new CustomException('Vendor not found!')
+
+        }
+
+        const previous_status = complaint.status
+        const current_status = 'assigned'
+
+        complaint.status = 'assigned'
+        complaint.assigned_to = vendor.id
+
+        await complaint.save({ transaction })
+
+
+        const complaint_log = await ComplaintLog.create(
+            {
+                complaint_id: complaint.id,
+                log_type: 'status-changed',
+                detail: {
+                    complain: complaint.complain,
+                },
+                previous_status: previous_status,
+                current_status: current_status,
+                log_writer_role: log_writer_role,
+                log_writer_id: log_writer_id,
+
+            }, { transaction }
+        )
+
+        await transaction.commit();
+
+        return complaint;
+
+    }
+
+    async setScheduleDate(complaint_id, date, log_writer_role, log_writer_id) {
+        try {
+            const transaction = await sequelize.transaction()
+            const complaint = await Complaint.findOne({
+                where: {
+                    id: complaint_id,
+                    assigned_to: log_writer_id
+                }
+            })
+            if (!complaint || complaint == null) {
+                throw new CustomException('Complaint not found!')
+            }
+
+            const previous_status = complaint.status;
+            const current_status = 'scheduled'
+
+            complaint.scheduled_date = date
+            await complaint.save({ transaction })
+
+            const complaint_log = await ComplaintLog.create(
+                {
+                    complaint_id: complaint.id,
+                    log_type: 'status-changed',
+                    detail: {
+                        complain: complaint.complain,
+                    },
+                    previous_status: previous_status,
+                    current_status: current_status,
+                    log_writer_role: log_writer_role,
+                    log_writer_id: log_writer_id,
+
+                },
+                {
+                    transaction
+                }
+            )
+            await transaction.commit()
+            return complaint
+        } catch (e) {
+            console.log(e)
+            if (e instanceof CustomException) {
+                throw e
+            }
+            throw new CustomException('Failed to set schedued date! Please try again.', 500)
+        }
+
+
+    }
+
+    async residentViewAllComplaints(user_id) {
+
+        try {
+            const complaints = await Complaint.findAll({
+                where: {
+                    user_id: user_id
+                },
+                include: [
+                    {
+                        model: User,
+                        as: 'Complainant',
+                        attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
+                        include: {
+                            model: TenantInfo,
+                            attributes: ['id', 'floor_number', 'apartment_number']
+                        }
+                    },
+                    {
+                        model: User,
+                        as: "Vendor",
+                        attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
+                        include: {
+                            model: VendorInfo,
+                            attributes: ['id', 'type', 'priority', 'availability']
+                        }
+
+                    }
+                ]
+            })
+
+            return complaints;
+        } catch (e) {
+            console.log(e)
+            throw new CustomException('Failed to fetch complaints! Please try again', 500)
+        }
+
+    }
+
+    async vendorViewAllComplaints(vendor_id) {
+
+        try {
+            const complaints = await Complaint.findAll({
+                where: {
+                    assigned_to: vendor_id
+                },
+                include: [
+                    {
+                        model: User,
+                        as: 'Complainant',
+                        attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
+                        include: {
+                            model: TenantInfo,
+                            attributes: ['id', 'floor_number', 'apartment_number']
+                        }
+                    },
+                    {
+                        model: User,
+                        as: "Vendor",
+                        attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
+                        include: {
+                            model: VendorInfo,
+                            attributes: ['id', 'type', 'priority', 'availability']
+                        }
+
+                    }
+                ]
+            })
+
+            return complaints;
+        } catch (e) {
+            console.log(e)
+            throw new CustomException('Failed to fetch complaints! Please try again', 500)
+        }
+
+    }
+
+    async ownerViewAllComplaints(owner_id) {
+
+        try {
+            const complaints = await Complaint.findAll({
+                include: [
+                    {
+                        model: Property,
+                        where: {
+                            owner_id: owner_id,
+                        },
+                        include: {
+                            model: Address,
+                        },
+                        attributes: ['id', 'name', 'address_id'],
+                    },
+                    {
+                        model: User,
+                        as: 'Complainant',
+                        attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
+                        include: {
+                            model: TenantInfo,
+                            attributes: ['id', 'floor_number', 'apartment_number']
+                        }
+                    },
+                    {
+                        model: User,
+                        as: "Vendor",
+                        attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
+                        include: {
+                            model: VendorInfo,
+                            attributes: ['id', 'type', 'priority', 'availability']
+                        }
+
+                    }
+                ]
+            })
+
+            return complaints;
+        } catch (e) {
+            console.log(e)
+            throw new CustomException('Failed to fetch complaints! Please try again', 500)
+        }
+
+    }
+
+}
+
+module.exports = new ComplaintService();
