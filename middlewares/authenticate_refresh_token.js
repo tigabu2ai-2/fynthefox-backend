@@ -43,7 +43,7 @@ async function authenticateRefreshToken(req, res, next) {
     } catch (e) {
         if (e instanceof CustomException) {
             console.log(e)
-            return responseBuilder.error(e.message).status(e.statusCode).send(res);
+            return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
         }
         console.log(e)
         return responseBuilder.error().status(e.statusCode).send(res);
