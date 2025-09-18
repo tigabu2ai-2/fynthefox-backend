@@ -27,7 +27,7 @@ class PropertyController {
         } catch (e) {
             console.log(e)
             if (e instanceof CustomException) {
-                return responseBuilder.error(e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
             }
             return responseBuilder.error().status(500).send(res);
         }
