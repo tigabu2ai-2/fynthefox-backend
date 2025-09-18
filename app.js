@@ -11,7 +11,8 @@ const createSuperAdmin = require('./seeders/create_super_admin')
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const propertiesRoutes = require('./routes/property');
-
+const agentRoutes = require('./routes/agent')
+const complaintRoutes = require('./routes/complaint')
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -21,10 +22,12 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/properties', propertiesRoutes);
+app.use('/api/agents', agentRoutes)
+app.use('/api/complaints', complaintRoutes)
 
 async function initializeApp() {
     try {
-        await sequelize.sync({ alter: false });
+        await sequelize.sync({ alter: true });
         console.log('Database synced');
 
         // Seed roles if they don't exist
