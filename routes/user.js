@@ -16,4 +16,9 @@ router.post('/register/vendor', authenticateAccessToken, authorizeRole(['super-a
 
 router.post('/register/property-user', authenticateAccessToken, authorizeRole(['property-owner']), UserValidator.validatePropertyUserRegistration, UserController.register_user);
 
+router.get('/fetch/property-owners', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserController.fetch_all_property_owner)
+
+router.get('/fetch/vendors',authenticateAccessToken, authorizeRole(['super-admin','admin','property-owner']), UserController.fetch_all_vendors)
+
+
 module.exports = router;
