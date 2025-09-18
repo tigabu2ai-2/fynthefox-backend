@@ -74,32 +74,32 @@ class ResponseBuilder {
 
   // 400 Bad Request
   static badRequest(message = 'Bad request', errors = null) {
-    return new ResponseBuilder().error(message, errors).status(400);
+    return new ResponseBuilder().error(errors,message).status(400);
   }
 
   // 401 Unauthorized
   static unauthorized(message = 'Unauthorized access') {
-    return new ResponseBuilder().error(message).status(401);
+    return new ResponseBuilder().error(null,message).status(401);
   }
 
   // 403 Forbidden
   static forbidden(message = 'Forbidden') {
-    return new ResponseBuilder().error(message).status(403);
+    return new ResponseBuilder().error(null,message).status(403);
   }
 
   // 404 Not Found
   static notFound(message = 'Resource not found') {
-    return new ResponseBuilder().error(message).status(404);
+    return new ResponseBuilder().error(null,message).status(404);
   }
 
   // 500 Internal Server Error
   static serverError(message = 'Internal server error') {
-    return new ResponseBuilder().error(message).status(500);
+    return new ResponseBuilder().error(null,message).status(500);
   }
 
   // Validation error (422 Unprocessable Entity)
   static validationError(errors, message = 'Validation failed') {
-    return new ResponseBuilder().error(message, errors).status(422);
+    return new ResponseBuilder().error(errors,message,).status(422);
   }
 }
 
