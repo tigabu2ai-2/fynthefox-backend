@@ -132,13 +132,17 @@ class ComplaintService {
     async residentViewAllComplaints(user_id, query) {
 
         try {
+            
+            // Building Search query based on the client preference --- START ----
             let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
-
             page = parseInt(page)
             limit = parseInt(limit)
             const offset = (page - 1) * limit
             const where = { user_id: user_id }
             if (status) where.status = status
+
+            // Building Search query based on the client preference --- END ----
+
             const { complaints, count } = await Complaint.findAndCountAll({
                 where: where,
                 order: [[sort_by, order.toUpperCase()]],
@@ -184,6 +188,8 @@ class ComplaintService {
     async vendorViewAllComplaints(vendor_id, query) {
 
         try {
+            // Building Search query based on the client preference --- START ----
+
             let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
 
             page = parseInt(page)
@@ -191,6 +197,7 @@ class ComplaintService {
             const offset = (page - 1) * limit
             const where = { assigned_to: vendor_id } // Making to return assigned Complaints ONLY
             if (status) where.status = status
+            // Building Search query based on the client preference --- END ----
 
             const { complaints, count } = await Complaint.findAndCountAll({
                 where: where,
@@ -236,6 +243,7 @@ class ComplaintService {
     async ownerViewAllComplaints(owner_id, query) {
 
         try {
+            // Building Search query based on the client preference --- START ----
             let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
 
             page = parseInt(page)
@@ -243,6 +251,7 @@ class ComplaintService {
             const offset = (page - 1) * limit
             const where = {}
             if (status) where.status = status
+            // Building Search query based on the client preference --- END ----
 
             const { rows: complaints, count } = await Complaint.findAndCountAll({
                 where: where, order: [[sort_by, order.toUpperCase()]],
