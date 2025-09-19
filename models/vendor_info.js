@@ -17,6 +17,11 @@ VendorInfo.init({
         type: DataTypes.INTEGER,
         defaultValue: 0
     },
+    status: {
+        type: DataTypes.ENUM('active', 'in-active'),
+        defaultValue: 'active',
+        allowNull: false
+    },
     availability: {
         type: DataTypes.JSON
     }
