@@ -14,7 +14,7 @@ router.put('/agent/assign-vendor', authenticateAgentAPIKey, ComplaintValidator.v
 
 router.put('/assign-vendor', authenticateAccessToken, authorizeRole(['property-owner']), ComplaintValidator.validateAssignVendor, ComplaintController.assing_vendor_by_owner)
 
-router.get('/fetch-all', authenticateAccessToken, authorizeRole(['property-owner', 'property-user', 'vendor']), ComplaintController.fetch_all_complaints)
+router.get('/fetch-all', authenticateAccessToken, authorizeRole(['property-owner', 'property-user', 'vendor']), ComplaintValidator.getAllValidator, ComplaintController.fetch_all_complaints)
 
 router.put('/set-schedule', authenticateAccessToken, authorizeRole(['vendor']), ComplaintValidator.validateSetSchedule, ComplaintController.set_schedule_date)
 module.exports = router

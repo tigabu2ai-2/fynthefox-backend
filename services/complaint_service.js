@@ -129,13 +129,21 @@ class ComplaintService {
 
     }
 
-    async residentViewAllComplaints(user_id) {
+    async residentViewAllComplaints(user_id, query) {
 
         try {
-            const complaints = await Complaint.findAll({
-                where: {
-                    user_id: user_id
-                },
+            let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+
+            page = parseInt(page)
+            limit = parseInt(limit)
+            const offset = (page - 1) * limit
+            const where = { user_id: user_id }
+            if (status) where.status = status
+            const { complaints, count } = await Complaint.findAndCountAll({
+                where: where,
+                order: [[sort_by, order.toUpperCase()]],
+                limit: limit,
+                offset: offset,
                 include: [
                     {
                         model: User,
@@ -159,7 +167,13 @@ class ComplaintService {
                 ]
             })
 
-            return complaints;
+            const pagination = {
+                total: count,
+                page,
+                pages: Math.ceil(count / limit),
+                limit
+            }
+            return { complaints, pagination };
         } catch (e) {
             console.log(e)
             throw new CustomException('Failed to fetch complaints! Please try again', 500)
@@ -167,13 +181,22 @@ class ComplaintService {
 
     }
 
-    async vendorViewAllComplaints(vendor_id) {
+    async vendorViewAllComplaints(vendor_id, query) {
 
         try {
-            const complaints = await Complaint.findAll({
-                where: {
-                    assigned_to: vendor_id
-                },
+            let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+
+            page = parseInt(page)
+            limit = parseInt(limit)
+            const offset = (page - 1) * limit
+            const where = { assigned_to: vendor_id } // Making to return assigned Complaints ONLY
+            if (status) where.status = status
+
+            const { complaints, count } = await Complaint.findAndCountAll({
+                where: where,
+                order: [[sort_by, order.toUpperCase()]],
+                limit: limit,
+                offset: offset,
                 include: [
                     {
                         model: User,
@@ -196,8 +219,13 @@ class ComplaintService {
                     }
                 ]
             })
-
-            return complaints;
+            const pagination = {
+                total: count,
+                page,
+                pages: Math.ceil(count / limit),
+                limit
+            }
+            return { complaints, pagination };
         } catch (e) {
             console.log(e)
             throw new CustomException('Failed to fetch complaints! Please try again', 500)
@@ -205,10 +233,21 @@ class ComplaintService {
 
     }
 
-    async ownerViewAllComplaints(owner_id) {
+    async ownerViewAllComplaints(owner_id, query) {
 
         try {
-            const complaints = await Complaint.findAll({
+            let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+
+            page = parseInt(page)
+            limit = parseInt(limit)
+            const offset = (page - 1) * limit
+            const where = {}
+            if (status) where.status = status
+
+            const { rows: complaints, count } = await Complaint.findAndCountAll({
+                where: where, order: [[sort_by, order.toUpperCase()]],
+                limit: limit,
+                offset: offset,
                 include: [
                     {
                         model: Property,
@@ -239,10 +278,16 @@ class ComplaintService {
                         }
 
                     }
-                ]
-            })
+                ],
 
-            return complaints;
+            })
+            const pagination = {
+                total: count,
+                page,
+                pages: Math.ceil(count / limit),
+                limit
+            }
+            return { complaints, pagination };
         } catch (e) {
             console.log(e)
             throw new CustomException('Failed to fetch complaints! Please try again', 500)

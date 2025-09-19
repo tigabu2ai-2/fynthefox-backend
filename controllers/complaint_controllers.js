@@ -90,19 +90,23 @@ class ComplaintController {
     async fetch_all_complaints(req, res) {
         const responseBuilder = new ResponseBuilder()
         try {
-            var complaints = []
+            let complaints = []
+            let pagination = {}
             switch (req.user.role) {
                 case 'property-owner':
-                    complaints = await complaintService.ownerViewAllComplaints(req.user.id)
+                    ; ({ complaints, pagination } = await complaintService.ownerViewAllComplaints(req.user.id, req.query))
+
                     break
                 case 'property-user':
-                    complaints = await complaintService.residentViewAllComplaints(req.user.id)
+                    ; ({ complaints, pagination } = await complaintService.residentViewAllComplaints(req.user.id, req.query))
+
                     break
                 case 'vendor':
-                    complaints = await complaintService.vendorViewAllComplaints(req.user.id)
+                    ; ({ complaints, pagination } = await complaintService.vendorViewAllComplaints(req.user.id, req.query))
+
                     break
             }
-            return ResponseBuilder.ok({ complaints: complaints }).send(res)
+            return ResponseBuilder.ok({ complaints, pagination }).send(res)
 
         } catch (e) {
             if (e instanceof CustomException) {
@@ -121,7 +125,7 @@ class ComplaintController {
             const complaint_id = req.body.complaint_id
             const date = req.body.date
             const log_writer_id = req.user.id
-            const complaint = await complaintService.setScheduleDate(complaint_id, date,'vendor', log_writer_id)
+            const complaint = await complaintService.setScheduleDate(complaint_id, date, 'vendor', log_writer_id)
             return ResponseBuilder.ok({ complaint: complaint }, 'Schedule  successfully set').send(res)
 
         } catch (e) {
