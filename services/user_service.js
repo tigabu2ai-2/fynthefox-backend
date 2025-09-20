@@ -1,6 +1,6 @@
-const { User, Role, Property, Agent, VendorInfo } = require('../models/index');
+const { User, Role, Property, Agent, VendorInfo, Address } = require('../models/index');
 const CustomException = require('../exceptions/custom_exception');
-const sequelize = require('../databases/pg')
+const sequelize = require('../databases/pg');
 
 class UserService {
     async register(data, role_name) {
@@ -36,41 +36,97 @@ class UserService {
         };
     }
 
-    async fetch_all_property_owners() {
+    async fetch_all_property_owners(query) {
         try {
-            const owners = await User.findAll({
-                include: {
-                    model: Role,
-                    where: {
-                        name: 'property-owner',
-                    },
-                    attributes: []
+            // Building Search query based on the client preference --- START ----
+            let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+            page = parseInt(page)
+            limit = parseInt(limit)
+            const offset = (page - 1) * limit
+            const where = {}
+            if (status) where.status = status
 
-                },
-                attributes: ['id', 'first_name', 'last_name', 'status']
+            // Building Search query based on the client preference --- END ----
+            const { rows: owners, count } = await User.findAndCountAll({
+                where: where,
+                order: [[sort_by, order.toUpperCase()]],
+                limit: limit,
+                offset: offset,
+                include: [
+                    {
+                        model: Role,
+                        where: {
+                            name: 'property-owner',
+                        },
+                        attributes: []
+
+                    },
+                    {
+                        model: Property,
+                       
+                        include: {
+                            model: Address,
+                            attributes: ['country', 'state', 'city', 'street', 'zip_code']
+                        }
+                    }
+                ],
+                attributes: ['id', 'first_name', 'last_name', 'status','createdAt']
             })
-            return owners;
+            const pagination = {
+                total: count,
+                page,
+                pages: Math.ceil(count / limit),
+                limit
+            }
+            return { owners, pagination };
         } catch (e) {
+            console.log(e)
             throw new CustomException('Failed to fetch property owners', 500)
         }
     }
 
-    async fetch_all_vendors() {
+    async fetch_all_vendors(query) {
         try {
-            const owners = await User.findAll({
-                include: {
-                    model: Role,
-                    where: {
-                        name: 'vendor',
-                    },
-                    attributes: []
+            // Building Search query based on the client preference --- START ----
+            let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+            page = parseInt(page)
+            limit = parseInt(limit)
+            const offset = (page - 1) * limit
+            const where = {}
+            if (status) where.status = status
 
-                },
+            // Building Search query based on the client preference --- END ----
+            const { rows: vendors, count } = await User.findAndCountAll({
+                where: where,
+                order: [[sort_by, order.toUpperCase()]],
+                limit: limit,
+                offset: offset,
+                include: [
+                    {
+                        model: Role,
+                        where: {
+                            name: 'vendor',
+                        },
+                        attributes: []
+
+                    },
+                    {
+                        model: VendorInfo,
+                        attributes: ['type', 'priority', 'status', 'availability']
+                    }
+                ],
                 attributes: ['id', 'first_name', 'last_name', 'status']
             })
-            return owners;
+            const pagination = {
+                total: count,
+                page,
+                pages: Math.ceil(count / limit),
+                limit
+            }
+            return { vendors, pagination };
         } catch (e) {
-            throw new CustomException('Failed to fetch property owners', 500)
+            console.log(e)
+            throw new CustomException('Failed to fetch property vendors', 500)
         }
     }
 

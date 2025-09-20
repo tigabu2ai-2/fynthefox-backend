@@ -26,7 +26,7 @@ class UserController {
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
             console.log(e)
-            if(e instanceof CustomException){
+            if (e instanceof CustomException) {
                 return responseBuilder.error(null, e.message).status(500).send(res)
             }
             return responseBuilder.error().status(500).send(res);
@@ -79,8 +79,8 @@ class UserController {
         const responseBuilder = new ResponseBuilder();
 
         try {
-            const owners = await userService.fetch_all_property_owners()
-            return responseBuilder.success({ owners: owners }).send(res)
+            const { owners, pagination } = await userService.fetch_all_property_owners(req.query)
+            return responseBuilder.success({ owners, pagination }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)
@@ -95,8 +95,9 @@ class UserController {
         const responseBuilder = new ResponseBuilder();
 
         try {
-            const vendors = await userService.fetch_all_vendors()
-            return responseBuilder.success({ vendors: vendors }).send(res)
+            const { vendors, pagination } = await userService.fetch_all_vendors(req.query)
+            console.log(vendors)
+            return responseBuilder.success({ vendors, pagination }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)
