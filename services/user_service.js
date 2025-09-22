@@ -200,5 +200,31 @@ class UserService {
         await vendor.destroy()
         return 'Vendor deleted!'
     }
+
+    async update_vendor(user_id, data) {
+        const vendor = await User.findByPk(user_id, {
+            attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
+            include: {
+                model: VendorInfo,
+                attributes: ['type', 'priority', 'availability','id']
+            }
+        });
+        if (!vendor) {
+            throw new CustomException('Vendor not found!', 400)
+        }
+        vendor.first_name ??= data.first_name
+        vendor.last_name ??= data.last_name
+        vendor.email ??= data.email
+        vendor.phone_number ??= data.phone_number
+
+        vendor.VendorInfo.type ??= data.type
+        vendor.VendorInfo.priority ??= data.priority
+        vendor.VendorInfo.availability ??= data.availability
+
+        await vendor.save()
+
+        return vendor
+
+    }
 }
 module.exports = new UserService();

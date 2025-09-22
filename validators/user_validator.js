@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const ResponseBuilder = require('../utils/response_builder');
-
+const VendorTypes = require("../constants/vendor_types")
 class UserValidator {
     static validateAdminRegistration(req, res, next) {
         const schema = Joi.object({
@@ -25,7 +25,7 @@ class UserValidator {
             email: Joi.string().email().required(),
             password: Joi.string().pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$')).message('Password must contain at least 8 characters, including uppercase, lowercase, number and special character').required(),
             phone_number: Joi.string().pattern(/^[0-9]{9,15}$/).required(),
-            type: Joi.string().valid(...Object.values(['plumber', 'electrician'])).required(),
+            type: Joi.string().valid(...Object.values(VendorTypes)).required(),
             priority: Joi.number().optional(),
             availability: Joi.object().optional()
 
@@ -71,7 +71,7 @@ class UserValidator {
         next();
     }
 
-    static getAllValidator(req, res, next) {
+    static validateGetAll(req, res, next) {
         const schema = Joi.object({
             page: Joi.number().min(1).optional(),
             limit: Joi.number().min(5).optional(),
@@ -80,6 +80,24 @@ class UserValidator {
             order: Joi.string().valid(...Object.values(['desc', 'asc'])).optional()
         })
         const { error } = schema.validate(req.query);
+        if (error) {
+            return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
+        }
+        next();
+    }
+
+    static validateVendorUpdate(req,res,next){
+        const schema = Joi.object({
+            first_name: Joi.string().min(2).max(30).optional(),
+            last_name: Joi.string().min(2).max(30).optional(),
+            email: Joi.string().email().optional(),
+            phone_number: Joi.string().pattern(/^[0-9]{9,15}$/).optional(),
+            type: Joi.string().valid(...Object.values(VendorTypes)).optional(),
+            priority: Joi.number().optional(),
+            availability: Joi.object().optional()
+        })
+
+        const { error } = schema.validate(req.body);
         if (error) {
             return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
         }

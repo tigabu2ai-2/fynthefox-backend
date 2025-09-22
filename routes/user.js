@@ -16,10 +16,12 @@ router.post('/register/vendors', authenticateAccessToken, authorizeRole(['super-
 
 router.post('/register/property-users', authenticateAccessToken, authorizeRole(['property-owner']), UserValidator.validatePropertyUserRegistration, UserController.register_user);
 
-router.get('/fetch/property-owners', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserValidator.getAllValidator, UserController.fetch_all_property_owner)
+router.get('/fetch/property-owners', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserValidator.validateGetAll, UserController.fetch_all_property_owner)
 
-router.get('/fetch/vendors', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner']), UserValidator.getAllValidator, UserController.fetch_all_vendors)
+router.get('/fetch/vendors', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner']), UserValidator.validateGetAll, UserController.fetch_all_vendors)
 
 router.delete('/delete/vendors/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserController.delete_vendor)
 
+
+router.put('/update/vendors/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin']),UserValidator.validateVendorUpdate,UserController.update_vendor)
 module.exports = router;
