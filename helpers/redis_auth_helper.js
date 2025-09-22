@@ -13,7 +13,7 @@ class RedisAuthHelper {
         const user_set_key = `user:${user_id}:accesses`
 
         await redis.set(token_key, JSON.stringify(meta), { expiration: {type:'EX',value:ACCESS_TOKEN_TTL} }) // Storing detailed info for the access token
-        await redis.set(user_set_key, access_hash)
+        await redis.sAdd(user_set_key, access_hash)
 
 
     }
@@ -46,8 +46,12 @@ class RedisAuthHelper {
         const user_set_key = `user:${user_id}`
 
         const refresh_hashs = await redis.sMembers(`${user_set_key}:refreshs`);
+        console.log(refresh_hashs)
+        console.log("---------------------------------------------------")
         const access_hashs = await redis.sMembers(`${user_set_key}:accesses`);
 
+        
+        console.log(access_hashs)
         const pipeline = redis.multi();
         for (const hash of refresh_hashs) {
             pipeline.del(`refresh:${hash}`)
