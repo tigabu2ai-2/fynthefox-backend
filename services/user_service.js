@@ -191,6 +191,7 @@ class UserService {
         }))
     }
 
+    // Vendor Specific methods ----- START ----- 
     async delete_vendor(user_id) {
         const vendor = await User.findByPk(user_id);
         if (!vendor) {
@@ -206,7 +207,7 @@ class UserService {
             attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
             include: {
                 model: VendorInfo,
-                attributes: ['type', 'priority', 'availability','id']
+                attributes: ['type', 'priority', 'availability', 'id']
             }
         });
         if (!vendor) {
@@ -226,5 +227,22 @@ class UserService {
         return vendor
 
     }
+
+    async fetch_vendor(user_id) {
+        const vendor = await User.findByPk(user_id, {
+            attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
+            include: {
+                model: VendorInfo,
+                attributes: ['type', 'priority', 'availability', 'id']
+            }
+        });
+        if (!vendor) {
+            throw new CustomException('Vendor not found!', 400)
+        }
+
+        return vendor
+    }
+    // Vendor Specific methods ----- START ----- 
+
 }
 module.exports = new UserService();

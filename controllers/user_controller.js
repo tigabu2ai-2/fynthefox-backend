@@ -142,6 +142,23 @@ class UserController {
             return responseBuilder.error().status(500).send(res);
         }
     }
+
+    async fetch_vendor(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try {
+            const vendor = await userService.fetch_vendor(req.params.id)
+            return responseBuilder.success(vendor,).send(res)
+
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
 }
 
 
