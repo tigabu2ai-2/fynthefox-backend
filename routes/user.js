@@ -6,19 +6,20 @@ const authenticateAccessToken = require('../middlewares/authenticate_access_toke
 
 const router = express.Router();
 
-router.post('/register/admin', authenticateAccessToken, authorizeRole(['super-admin',]), UserValidator.validateAdminRegistration, UserController.register_admin);
+router.post('/register/admins', authenticateAccessToken, authorizeRole(['super-admin',]), UserValidator.validateAdminRegistration, UserController.register_admin);
 
 
-router.post('/register/property-owner', UserValidator.validatePropertyOwnerRegistration, UserController.register_owner);
+router.post('/register/property-owners', UserValidator.validatePropertyOwnerRegistration, UserController.register_owner);
 
-router.post('/register/vendor', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserValidator.validateVendorRegistration, UserController.register_vendor);
+router.post('/register/vendors', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserValidator.validateVendorRegistration, UserController.register_vendor);
 
 
-router.post('/register/property-user', authenticateAccessToken, authorizeRole(['property-owner']), UserValidator.validatePropertyUserRegistration, UserController.register_user);
+router.post('/register/property-users', authenticateAccessToken, authorizeRole(['property-owner']), UserValidator.validatePropertyUserRegistration, UserController.register_user);
 
 router.get('/fetch/property-owners', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserValidator.getAllValidator, UserController.fetch_all_property_owner)
 
 router.get('/fetch/vendors', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner']), UserValidator.getAllValidator, UserController.fetch_all_vendors)
 
+router.delete('/delete/vendors/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserController.delete_vendor)
 
 module.exports = router;

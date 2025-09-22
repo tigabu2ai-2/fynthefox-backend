@@ -1,6 +1,7 @@
 const { User, Role, Property, Agent, VendorInfo, Address } = require('../models/index');
 const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg');
+const RedisAuthHelper = require('../helpers/redis_auth_helper')
 
 class UserService {
     async register(data, role_name) {
@@ -63,14 +64,14 @@ class UserService {
                     },
                     {
                         model: Property,
-                       
+
                         include: {
                             model: Address,
                             attributes: ['country', 'state', 'city', 'street', 'zip_code']
                         }
                     }
                 ],
-                attributes: ['id', 'first_name', 'last_name', 'status','createdAt']
+                attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt']
             })
             const pagination = {
                 total: count,
@@ -188,6 +189,16 @@ class UserService {
                 property_id: property_id
             }
         }))
+    }
+
+    async delete_vendor(user_id) {
+        const vendor = await User.findByPk(user_id);
+        if (!vendor) {
+            throw new CustomException('Vendor not found!', 400)
+        }
+        await RedisAuthHelper.revokeAllToken(user_id)
+        await vendor.destroy()
+        return 'Vendor deleted!'
     }
 }
 module.exports = new UserService();
