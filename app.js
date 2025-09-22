@@ -27,7 +27,7 @@ app.use('/api/complaints', complaintRoutes)
 
 async function initializeApp() {
     try {
-        await sequelize.sync({ alter: true });
+        await sequelize.sync({ alter: false });
         console.log('Database synced');
 
         // Seed roles if they don't exist

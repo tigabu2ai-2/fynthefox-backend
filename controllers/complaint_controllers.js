@@ -139,6 +139,31 @@ class ComplaintController {
         }
     }
 
+    async fetch_complaint_detail_info(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try { 
+            const complaint_id = req.params.id;
+            const user_role = req.user.role;
+            const user_id = req.user.id
+            if(!(await complaintService.isOwnerOfThisComplaint(complaint_id,user_role, user_id))){
+                return responseBuilder.error(null, 'You do not have access to this resource').status(400).send(res)
+            }
+
+            const complaint = await complaintService.fetchComplaintDetailInfo(complaint_id)
+            return ResponseBuilder.ok({ complaint: complaint }, ).send(res)
+
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
 }
 
 module.exports = new ComplaintController()

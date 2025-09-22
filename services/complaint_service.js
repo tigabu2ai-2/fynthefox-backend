@@ -132,7 +132,7 @@ class ComplaintService {
     async residentViewAllComplaints(user_id, query) {
 
         try {
-            
+
             // Building Search query based on the client preference --- START ----
             let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
             page = parseInt(page)
@@ -143,7 +143,7 @@ class ComplaintService {
 
             // Building Search query based on the client preference --- END ----
 
-            const { complaints, count } = await Complaint.findAndCountAll({
+            const { rows:complaints, count } = await Complaint.findAndCountAll({
                 where: where,
                 order: [[sort_by, order.toUpperCase()]],
                 limit: limit,
@@ -177,6 +177,7 @@ class ComplaintService {
                 pages: Math.ceil(count / limit),
                 limit
             }
+            console.log(complaints)
             return { complaints, pagination };
         } catch (e) {
             console.log(e)
@@ -199,7 +200,7 @@ class ComplaintService {
             if (status) where.status = status
             // Building Search query based on the client preference --- END ----
 
-            const { complaints, count } = await Complaint.findAndCountAll({
+            const { rows:complaints, count } = await Complaint.findAndCountAll({
                 where: where,
                 order: [[sort_by, order.toUpperCase()]],
                 limit: limit,
@@ -302,6 +303,80 @@ class ComplaintService {
             throw new CustomException('Failed to fetch complaints! Please try again', 500)
         }
 
+    }
+
+    async fetchComplaintDetailInfo(complaint_id) {
+        try {
+            const complaint = await Complaint.findByPk(complaint_id, {
+                include: [
+                    {
+                        model: User,
+                        as: 'Complainant',
+                        attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
+                        include: {
+                            model: TenantInfo,
+                            attributes: ['id', 'floor_number', 'apartment_number']
+                        }
+                    },
+                    {
+                        model: User,
+                        as: "Vendor",
+                        attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
+                        include: {
+                            model: VendorInfo,
+                            attributes: ['id', 'type', 'priority', 'availability']
+                        }
+
+                    },
+                    {
+                        model: ComplaintLog,
+                        attributes: ['log_type', 'previous_status', 'current_status', 'log_writer_role', 'detail'],
+                        order: [['createdAt', 'DESC']]
+
+                    }
+                ]
+            })
+
+            return complaint
+        } catch (e) {
+            console.log(e)
+            if (e instanceof CustomException) throw e
+            throw new CustomException('Failed to fetch complaint detail! Please try again', 500)
+        }
+    }
+
+    async isOwnerOfThisComplaint(complaint_id, user_role, user_id) {
+        let complaint;
+        switch (user_role) {
+            case 'property-owner':
+                complaint = await Complaint.findByPk(complaint_id, {
+                    include: {
+                        model: Property,
+                        where: {
+                            owner_id: user_id
+                        }
+                    }
+                })
+                break;
+            case 'vendor':
+                complaint = await Complaint.findOne({
+                    where: {
+                        id: complaint_id,
+                        assigned_to: user_id
+                    }
+                });
+                break;
+            case 'property-user':
+                complaint = await Complaint.findOne({
+                    where: {
+                        id: complaint_id,
+                        user_id: user_id
+                    }
+                });
+                break;
+        }
+
+        return !!complaint;
     }
 
 }
