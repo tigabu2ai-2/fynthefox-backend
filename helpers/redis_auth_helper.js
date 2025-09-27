@@ -1,4 +1,3 @@
-
 require('dotenv').config()
 
 const redis = require("../databases/redis")
@@ -12,7 +11,7 @@ class RedisAuthHelper {
         const token_key = `access:${access_hash}`
         const user_set_key = `user:${user_id}:accesses`
 
-        await redis.set(token_key, JSON.stringify(meta), { expiration: {type:'EX',value:ACCESS_TOKEN_TTL} }) // Storing detailed info for the access token
+        await redis.set(token_key, JSON.stringify(meta), { expiration: { type: 'EX', value: ACCESS_TOKEN_TTL } }) // Storing detailed info for the access token
         await redis.sAdd(user_set_key, access_hash)
 
 
@@ -22,7 +21,7 @@ class RedisAuthHelper {
         const token_key = `refresh:${refresh_hash}`;
         const user_set_key = `user:${user_id}:refreshs`;
 
-        await redis.set(token_key, JSON.stringify(meta), { expiration: {type:'EX',value:REFRESH_TOKEN_TTL} }) // Storing detailed info for the refresh token
+        await redis.set(token_key, JSON.stringify(meta), { expiration: { type: 'EX', value: REFRESH_TOKEN_TTL } }) // Storing detailed info for the refresh token
         await redis.sAdd(user_set_key, refresh_hash); // This is just for session management. To list
     }
 
@@ -46,19 +45,16 @@ class RedisAuthHelper {
         const user_set_key = `user:${user_id}`
 
         const refresh_hashs = await redis.sMembers(`${user_set_key}:refreshs`);
-        console.log(refresh_hashs)
-        console.log("---------------------------------------------------")
         const access_hashs = await redis.sMembers(`${user_set_key}:accesses`);
 
-        
-        console.log(access_hashs)
+
         const pipeline = redis.multi();
         for (const hash of refresh_hashs) {
             pipeline.del(`refresh:${hash}`)
         }
 
         for (const hash of access_hashs) {
-            pipeline.del(`accesses:${hash}`)
+            pipeline.del(`access:${hash}`)
         }
 
         pipeline.del(`${user_set_key}:refreshs`)
@@ -93,9 +89,20 @@ class RedisAuthHelper {
         if (!data) return null; //invalid or expired
 
         const meta = JSON.parse(data)
-
+console.log(meta)
+        console.log(data)
         return meta;
 
+    }
+    static async verifyAccessToken(access_hash) {
+        const token_key = `access:${access_hash}`
+        const data = await redis.get(token_key)
+
+        if (!data) return null; // Invalid or expired access token
+        const meta = JSON.parse(data)
+        
+
+        return meta;
     }
 }
 
