@@ -118,8 +118,26 @@ class AuthService {
         user.reset_password_token = null;
         user.reset_password_expires = null;
         await user.save();
+        await RedisAuthHelper.revokeAllToken(user.id)
 
         return { message: 'Password has been reset successfully' };
+    }
+
+    async changePassword(user_id, data) {
+        const user = await User.findByPk(user_id);
+        if (!user) {
+            throw new CustomException('User not found1', 500)
+        }
+
+        if (!(await bcrypt.compare(data.old_password, user.password_hash))) {
+            throw new CustomException('Incorrect old password')
+        }
+        user.password_hash = await user.hashPassword(data.new_password)
+        await user.save()
+        await RedisAuthHelper.revokeAllToken(user_id)
+        return { message: 'Password has been changed' };
+
+
     }
 }
 

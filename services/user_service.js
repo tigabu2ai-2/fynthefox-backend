@@ -37,6 +37,7 @@ class UserService {
         };
     }
 
+    
     async fetch_all_property_owners(query) {
         try {
             // Building Search query based on the client preference --- START ----
@@ -213,18 +214,20 @@ class UserService {
         if (!vendor) {
             throw new CustomException('Vendor not found!', 400)
         }
-        vendor.first_name ??= data.first_name
-        vendor.last_name ??= data.last_name
+        vendor.first_name = data.first_name?? vendor.first_name
+        vendor.last_name = data.last_name?? vendor.last_name
         vendor.email ??= data.email
         vendor.phone_number ??= data.phone_number
 
         vendor.VendorInfo.type ??= data.type
         vendor.VendorInfo.priority ??= data.priority
         vendor.VendorInfo.availability ??= data.availability
+        
+        console.log(data.first_name)
+        console.log(vendor.changed())
 
-        await vendor.save()
-
-        return vendor
+       const vendor_updated =  await vendor.save({logging:console.log})
+        return vendor_updated
 
     }
 
