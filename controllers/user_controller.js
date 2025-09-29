@@ -75,6 +75,20 @@ class UserController {
         }
     }
 
+    async fetch_all_property_users(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            const { users, pagination } = await userService.fetch_all_property_users(req.user.role, req.user.id, req.query);
+            return responseBuilder.success({ users, pagination }).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
     async fetch_all_property_owner(req, res) {
         const responseBuilder = new ResponseBuilder();
 

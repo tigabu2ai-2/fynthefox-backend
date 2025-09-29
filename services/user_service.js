@@ -37,7 +37,7 @@ class UserService {
         };
     }
 
-    
+
     async fetch_all_property_owners(query) {
         try {
             // Building Search query based on the client preference --- START ----
@@ -132,6 +132,50 @@ class UserService {
         }
     }
 
+    async fetch_all_property_users(requester_role, requester_id, query) {
+        // Building Search query based on the client preference --- START ----
+        let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+        page = parseInt(page)
+        limit = parseInt(limit)
+        const offset = (page - 1) * limit
+        const where = {}
+        if (status) where.status = status
+
+        // Building Search query based on the client preference --- END ----
+
+        let users = []
+        let count = 0;
+        switch (requester_role) {
+            case 'super-admin':
+            case 'admin':
+                break;
+            case 'property-owner':
+                ; ({ rows: users, count } = await User.findAndCountAll({
+                    where: where,
+                    order: [[sort_by, order.toUpperCase()]],
+                    limit: limit,
+                    offset: offset,
+                    include: {
+                        model: Property,
+                        where: { owner_id: requester_id },
+                        attributes:['id','name','createdAt']
+                    },
+                    attributes: ['id', 'first_name', 'last_name', 'status','createdAt']
+                }))
+                break;
+            default: break
+        }
+
+        const pagination = {
+            total: count,
+            page,
+            pages: Math.ceil(count / limit),
+            limit
+        }
+        return { users, pagination };
+
+    }
+
     async is_owner_of_the_property(user_id, property_id) {
         const user = await User.findByPk(user_id, {
             include: {
@@ -214,19 +258,19 @@ class UserService {
         if (!vendor) {
             throw new CustomException('Vendor not found!', 400)
         }
-        vendor.first_name = data.first_name?? vendor.first_name
-        vendor.last_name = data.last_name?? vendor.last_name
+        vendor.first_name = data.first_name ?? vendor.first_name
+        vendor.last_name = data.last_name ?? vendor.last_name
         vendor.email ??= data.email
         vendor.phone_number ??= data.phone_number
 
         vendor.VendorInfo.type ??= data.type
         vendor.VendorInfo.priority ??= data.priority
         vendor.VendorInfo.availability ??= data.availability
-        
+
         console.log(data.first_name)
         console.log(vendor.changed())
 
-       const vendor_updated =  await vendor.save({logging:console.log})
+        const vendor_updated = await vendor.save({ logging: console.log })
         return vendor_updated
 
     }

@@ -3,6 +3,7 @@ const UserController = require('../controllers/user_controller');
 const UserValidator = require('../validators/user_validator');
 const authorizeRole = require('../middlewares/authorize_role');
 const authenticateAccessToken = require('../middlewares/authenticate_access_token');
+const { route } = require('./dashboard');
 
 const router = express.Router();
 
@@ -18,6 +19,7 @@ router.post('/register/property-users', authenticateAccessToken, authorizeRole([
 
 router.get('/fetch/property-owners', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserValidator.validateGetAll, UserController.fetch_all_property_owner)
 
+router.get('/fetch/property-users', authenticateAccessToken, authorizeRole(['super-admin','admin','property-owner']), UserValidator.validateGetAll,UserController.fetch_all_property_users)
 
 router.get('/fetch/vendors', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner']), UserValidator.validateGetAll, UserController.fetch_all_vendors)
 
