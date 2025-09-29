@@ -15,6 +15,8 @@ const propertiesRoutes = require('./routes/property');
 const agentRoutes = require('./routes/agent')
 const complaintRoutes = require('./routes/complaint')
 const accountRoutes = require('./routes/account')
+const dashboardRoutes = require('./routes/dashboard')
+
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -30,6 +32,7 @@ app.use('/api/properties', propertiesRoutes);
 app.use('/api/agents', agentRoutes)
 app.use('/api/complaints', complaintRoutes)
 app.use('/api/account', accountRoutes)
+app.use('/api/dashboard', dashboardRoutes)
 
 async function initializeApp() {
     try {
