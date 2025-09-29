@@ -2,9 +2,13 @@ const express = require('express');
 require('dotenv').config();
 const cors = require('cors')
 
+const Logger =require("./utils/logger")
+const logger = new Logger("Bootstrap")
+
+const errorHandler = require("./middlewares/error_handler")
+
 
 const sequelize = require('./databases/pg');
-const models = require('./models/index');
 
 const createRoles = require('./seeders/create_roles')
 const createSuperAdmin = require('./seeders/create_super_admin')
@@ -15,7 +19,8 @@ const propertiesRoutes = require('./routes/property');
 const agentRoutes = require('./routes/agent')
 const complaintRoutes = require('./routes/complaint')
 const accountRoutes = require('./routes/account')
-const dashboardRoutes = require('./routes/dashboard')
+const dashboardRoutes = require('./routes/dashboard');
+
 
 const app = express();
 
@@ -34,10 +39,12 @@ app.use('/api/complaints', complaintRoutes)
 app.use('/api/account', accountRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 
+app.use(errorHandler)
+
 async function initializeApp() {
     try {
         await sequelize.sync({ alter: false });
-        console.log('Database synced');
+        logger.info('Database synced');
 
         // Seed roles if they don't exist
         await createRoles();
@@ -46,12 +53,12 @@ async function initializeApp() {
         await createSuperAdmin();
 
         app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
+            logger.info(`Server is running on port ${PORT}`);
         }).on('error', (err) => {
-            console.error('Server error:', err);
+            logger.error('Server error:', err);
         })
     } catch (e) {
-        console.error('Error during app initialization:', e);
+        logger.error('Error during app initialization:', e);
         process.exit(1);
     }
 }
