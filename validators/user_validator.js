@@ -86,7 +86,24 @@ class UserValidator {
         next();
     }
 
-    static validateVendorUpdate(req,res,next){
+    static validatePropertyUserUpdate(req, res, next) {
+        const schema = Joi.object({
+            first_name: Joi.string().min(2).max(30).optional(),
+            last_name: Joi.string().min(2).max(30).optional(),
+            email: Joi.string().email().optional(),
+            phone_number: Joi.string().pattern(/^[0-9]{9,15}$/).optional(),
+            property_id: Joi.string().uuid().optional(),
+            floor_number: Joi.number().integer().optional(),
+            apartment_number: Joi.string().optional()
+        })
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
+        }
+        next();
+    }
+
+    static validateVendorUpdate(req, res, next) {
         const schema = Joi.object({
             first_name: Joi.string().min(2).max(30).optional(),
             last_name: Joi.string().min(2).max(30).optional(),

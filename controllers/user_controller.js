@@ -127,6 +127,25 @@ class UserController {
             return responseBuilder.error().status(500).send(res);
         }
     }
+
+    async update_property_user(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            if (!(userService.is_resident_of_owner(req.params.id, req.user.id))) {
+                return ResponseBuilder.forbidden("You do not have permission to access this resource").send(res)
+            }
+
+            const updated_user = await userService.update_property_user(req.params.id, req.body)
+            return responseBuilder.success(updated_user).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
     // Property-User Specific controllers ----- END -----
 
 

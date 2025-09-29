@@ -240,6 +240,56 @@ class UserService {
             ]
         }))
     }
+
+    async update_property_user(user_id, data) {
+        const user = await User.findByPk(user_id, {
+            include: [{
+                model: Role,
+                name: "property-user",
+                attributes: []
+            },
+            {
+                as: 'MemberOfProperty',
+                model: Property
+            },
+            {
+                model: TenantInfo
+            }
+            ]
+        })
+
+        if (!user) {
+            throw new CustomException("Property-User Not Found!")
+        }
+        user.first_name = data.first_name ?? user.first_name
+        user.last_name = data.last_name ?? user.last_name
+        user.email = data.email ?? user.email
+        user.phone_number = data.phone_number ?? user.email
+        user.property_id = data.property_id ?? user.property_id
+
+        user.TenantInfo.floor_number = data.floor_number ?? user.TenantInfo.floor_number
+        user.TenantInfo.apartment_number = data.apartment_number ?? user.TenantInfo.apartment_number
+
+        await user.TenantInfo.save()
+        const updated_user = await user.save()
+
+        return {
+            id: updated_user.id,
+            first_name: updated_user.first_name,
+            last_name: updated_user.last_name,
+            email: updated_user.email,
+            phone_number: updated_user.phone_number,
+            MemberOfProperty: {
+                id: updated_user.MemberOfProperty.id,
+                name: updated_user.MemberOfProperty.id
+            },
+            TenantInfo:{
+                id: updated_user.TenantInfo.id,
+                floor_number: updated_user.TenantInfo.floor_number,
+                apartment_number: updated_user.TenantInfo.apartment_number
+            }
+        }
+    }
     // Preporty-User Specific methods ----- END -----
 
     // Vendor Specific methods ----- START -----
@@ -310,16 +360,14 @@ class UserService {
         }
         vendor.first_name = data.first_name ?? vendor.first_name
         vendor.last_name = data.last_name ?? vendor.last_name
-        vendor.email ??= data.email
-        vendor.phone_number ??= data.phone_number
+        vendor.email = data.email ?? vendor.email
+        vendor.phone_number = data.phone_number ?? vendor.phone_number
 
-        vendor.VendorInfo.type ??= data.type
-        vendor.VendorInfo.priority ??= data.priority
-        vendor.VendorInfo.availability ??= data.availability
+        vendor.VendorInfo.type = data.type ?? vendor.VendorInfo.type
+        vendor.VendorInfo.priority = data.priority ?? vendor.VendorInfo.priority
+        vendor.VendorInfo.availability = data.availability ?? vendor.VendorInfo.availability
 
-        console.log(data.first_name)
-        console.log(vendor.changed())
-
+        await vendor.VendorInfo.save()
         const vendor_updated = await vendor.save({ logging: console.log })
         return vendor_updated
 

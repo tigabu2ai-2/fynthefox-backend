@@ -24,6 +24,9 @@ router.get('/fetch/property-users', authenticateAccessToken, authorizeRole(['sup
 
 router.get('/fetch/property-users/:id',authenticateAccessToken, authorizeRole(['super-admin','admin','property-owner']), UUIDValidator.paramIDValidator,UserController.fetch_property_user)
 
+router.put('/update/property-users/:id', authenticateAccessToken, authorizeRole(['property-owner']),UUIDValidator.paramIDValidator, UserValidator.validatePropertyUserUpdate,UserController.update_property_user)
+
+
 router.get('/fetch/vendors', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner']), UserValidator.validateGetAll, UserController.fetch_all_vendors)
 
 router.get('/fetch/vendors/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner']),UUIDValidator.paramIDValidator, UserController.fetch_vendor)
