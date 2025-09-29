@@ -1,7 +1,8 @@
-const { User, Role, Property, Agent, VendorInfo, Address, PropertyInfo } = require('../models/index');
+const { User, Role, Property, Agent, VendorInfo, Address, TenantInfo } = require('../models/index');
 const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg');
-const RedisAuthHelper = require('../helpers/redis_auth_helper')
+const RedisAuthHelper = require('../helpers/redis_auth_helper');
+const { where } = require('sequelize');
 
 class UserService {
     async register(data, role_name) {
@@ -66,6 +67,7 @@ class UserService {
 
                     },
                     {
+                        as: 'OwnedProperties',
                         model: Property,
 
                         include: {
@@ -91,6 +93,8 @@ class UserService {
     async is_owner_of_the_property(user_id, property_id) {
         const user = await User.findByPk(user_id, {
             include: {
+                as: 'OwnedProperties',
+
                 model: Property,
                 where: { id: property_id }
             }
@@ -149,11 +153,21 @@ class UserService {
                     order: [[sort_by, order.toUpperCase()]],
                     limit: limit,
                     offset: offset,
-                    include: {
-                        model: Property,
-                        where: { owner_id: requester_id },
-                        attributes: ['id', 'name', 'createdAt']
-                    },
+                    include: [
+                        {
+                            model: Role,
+                            where: {
+                                name: 'property-user',
+                            },
+                            attributes: []
+
+                        },
+                        {
+                            as: 'MemberOfProperty',
+                            model: Property,
+                            where: { owner_id: requester_id },
+                            attributes: ['id', 'name', 'createdAt']
+                        },],
                     attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt']
                 }))
                 break;
@@ -176,10 +190,19 @@ class UserService {
 
             include: [
                 {
+                    model: Role,
+                    where: {
+                        name: 'property-user',
+                    },
+                    attributes: []
+
+                },
+                {
+                    as: 'MemberOfProperty',
                     model: Property
                 },
                 {
-                    model: PropertyInfo
+                    model: TenantInfo
                 }
             ]
         })
@@ -197,6 +220,24 @@ class UserService {
                 id: user_id,
                 property_id: property_id
             }
+        }))
+    }
+
+    async is_resident_of_owner(user_id, owner_id) {
+        return !!(await User.findByPk(user_id, {
+            include: [
+                {
+                    model: Role,
+                    where: {
+                        name: 'property-user'
+                    }
+                },
+                {
+                    as: 'MemberOfProperty',
+                    model: Property,
+                    where: { owner_id: owner_id }
+                }
+            ]
         }))
     }
     // Preporty-User Specific methods ----- END -----
