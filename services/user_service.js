@@ -1,4 +1,4 @@
-const { User, Role, Property, Agent, VendorInfo, Address } = require('../models/index');
+const { User, Role, Property, Agent, VendorInfo, Address, PropertyInfo } = require('../models/index');
 const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg');
 const RedisAuthHelper = require('../helpers/redis_auth_helper')
@@ -36,6 +36,8 @@ class UserService {
             is_2fa_enabled: user.is_2fa_enabled
         };
     }
+
+    // Preporty-Owner Specific methods ----- START -----
 
 
     async fetch_all_property_owners(query) {
@@ -86,7 +88,120 @@ class UserService {
             throw new CustomException('Failed to fetch property owners', 500)
         }
     }
+    async is_owner_of_the_property(user_id, property_id) {
+        const user = await User.findByPk(user_id, {
+            include: {
+                model: Property,
+                where: { id: property_id }
+            }
+        });
+        return user ? true : false;
+    }
 
+    async is_property_owner(user_id) {
+        return !!(await User.findByPk(user_id,
+            {
+                include:
+                {
+                    model: Role,
+                    where: {
+                        name: 'property-owner'
+                    }
+                }
+            }))
+    }
+
+
+    async is_owner_of_the_agent(user_id, agent_id) {
+        return !!(
+            await User.findByPk(user_id, {
+                include: {
+                    model: Agent,
+                    where: { id: agent_id }
+                }
+            })
+        )
+    }
+    // Preporty-Owner Specific methods ----- END -----
+
+
+    // Preporty-User Specific methods ----- START -----
+    async fetch_all_property_users(requester_role, requester_id, query) {
+        // Building Search query based on the client preference --- START ----
+        let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+        page = parseInt(page)
+        limit = parseInt(limit)
+        const offset = (page - 1) * limit
+        const where = {}
+        if (status) where.status = status
+
+        // Building Search query based on the client preference --- END ----
+
+        let users = []
+        let count = 0;
+        switch (requester_role) {
+            case 'super-admin':
+            case 'admin':
+                break;
+            case 'property-owner':
+                ; ({ rows: users, count } = await User.findAndCountAll({
+                    where: where,
+                    order: [[sort_by, order.toUpperCase()]],
+                    limit: limit,
+                    offset: offset,
+                    include: {
+                        model: Property,
+                        where: { owner_id: requester_id },
+                        attributes: ['id', 'name', 'createdAt']
+                    },
+                    attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt']
+                }))
+                break;
+            default: break
+        }
+
+        const pagination = {
+            total: count,
+            page,
+            pages: Math.ceil(count / limit),
+            limit
+        }
+        return { users, pagination };
+
+    }
+
+    async fetch_property_user(user_id) {
+        const user = await User.findByPk(user_id, {
+            attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
+
+            include: [
+                {
+                    model: Property
+                },
+                {
+                    model: PropertyInfo
+                }
+            ]
+        })
+
+        return { user }
+    }
+
+    async resident_exist(user_id) {
+        return !!(await User.findByPk(user_id, { include: { model: Role, where: { name: 'property-user' } } }))
+    }
+
+    async is_resident_of_property(user_id, property_id) {
+        return !!(await User.findOne({
+            where: {
+                id: user_id,
+                property_id: property_id
+            }
+        }))
+    }
+    // Preporty-User Specific methods ----- END -----
+
+    // Vendor Specific methods ----- START -----
     async fetch_all_vendors(query) {
         try {
             // Building Search query based on the client preference --- START ----
@@ -131,112 +246,6 @@ class UserService {
             throw new CustomException('Failed to fetch property vendors', 500)
         }
     }
-
-    async fetch_all_property_users(requester_role, requester_id, query) {
-        // Building Search query based on the client preference --- START ----
-        let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
-        page = parseInt(page)
-        limit = parseInt(limit)
-        const offset = (page - 1) * limit
-        const where = {}
-        if (status) where.status = status
-
-        // Building Search query based on the client preference --- END ----
-
-        let users = []
-        let count = 0;
-        switch (requester_role) {
-            case 'super-admin':
-            case 'admin':
-                break;
-            case 'property-owner':
-                ; ({ rows: users, count } = await User.findAndCountAll({
-                    where: where,
-                    order: [[sort_by, order.toUpperCase()]],
-                    limit: limit,
-                    offset: offset,
-                    include: {
-                        model: Property,
-                        where: { owner_id: requester_id },
-                        attributes:['id','name','createdAt']
-                    },
-                    attributes: ['id', 'first_name', 'last_name', 'status','createdAt']
-                }))
-                break;
-            default: break
-        }
-
-        const pagination = {
-            total: count,
-            page,
-            pages: Math.ceil(count / limit),
-            limit
-        }
-        return { users, pagination };
-
-    }
-
-    async is_owner_of_the_property(user_id, property_id) {
-        const user = await User.findByPk(user_id, {
-            include: {
-                model: Property,
-                where: { id: property_id }
-            }
-        });
-        return user ? true : false;
-    }
-
-    async is_owner_of_the_agent(user_id, agent_id) {
-        return !!(
-            await User.findByPk(user_id, {
-                include: {
-                    model: Agent,
-                    where: { id: agent_id }
-                }
-            })
-        )
-    }
-
-    async is_property_owner(user_id) {
-        return !!(await User.findByPk(user_id,
-            {
-                include:
-                {
-                    model: Role,
-                    where: {
-                        name: 'property-owner'
-                    }
-                }
-            }))
-    }
-
-    async vendor_exist(user_id) {
-        return !!(await User.findByPk(user_id,
-            {
-                include: {
-                    model: Role,
-                    where: {
-                        name: 'vendor'
-                    }
-                }
-            }
-        ))
-    }
-
-    async resident_exist(user_id) {
-        return !!(await User.findByPk(user_id, { include: { model: Role, where: { name: 'property-user' } } }))
-    }
-
-    async is_resident_of_property(user_id, property_id) {
-        return !!(await User.findOne({
-            where: {
-                id: user_id,
-                property_id: property_id
-            }
-        }))
-    }
-
-    // Vendor Specific methods ----- START ----- 
     async delete_vendor(user_id) {
         const vendor = await User.findByPk(user_id);
         if (!vendor) {
@@ -289,7 +298,19 @@ class UserService {
 
         return vendor
     }
-    // Vendor Specific methods ----- START ----- 
+    async vendor_exist(user_id) {
+        return !!(await User.findByPk(user_id,
+            {
+                include: {
+                    model: Role,
+                    where: {
+                        name: 'vendor'
+                    }
+                }
+            }
+        ))
+    }
+    // Vendor Specific methods ----- END ----- 
 
 }
 module.exports = new UserService();
