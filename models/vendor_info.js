@@ -25,11 +25,25 @@ VendorInfo.init({
         allowNull: false
     },
     availability: {
-        type: DataTypes.JSON
+        type: DataTypes.TEXT,
+        get() {
+            const raw = this.getDataValue('availability');
+            try { return raw ? JSON.parse(raw) : null; } catch { return raw; }
+        },
+        set(value) {
+            this.setDataValue('availability', JSON.stringify(value));
+        }
     },
     service_area: {
         type: DataTypes.JSON,
-        allowNull: false
+        allowNull: false,
+        get() {
+            const raw = this.getDataValue('service_area');
+            try { return raw ? JSON.parse(raw) : null; } catch { return raw; }
+        },
+        set(value) {
+            this.setDataValue('service_area', JSON.stringify(value));
+        }
     },
     preferred_contact_method: {
         type: DataTypes.ENUM('email', 'phone', 'whatsapp'),
