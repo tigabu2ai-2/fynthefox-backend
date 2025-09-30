@@ -326,7 +326,7 @@ class UserService {
                     },
                     {
                         model: VendorInfo,
-                        attributes: ['type', 'priority', 'status', 'availability']
+                        attributes: ['type', 'priority', 'status', 'availability','service_area','preferred_contact_method']
                     }
                 ],
                 attributes: ['id', 'first_name', 'last_name', 'status']
