@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const ResponseBuilder = require('../utils/response_builder');
 const ComplaintCategories = require('../constants/complaint_categories')
+const ComplainantStatus = require('../constants/complaint_status')
 
 class ComplaintValidator {
     static validateCreateComplaint(req, res, next) {
@@ -8,7 +9,7 @@ class ComplaintValidator {
             user_id: Joi.string().uuid().required(),
             complain: Joi.string().required(),
             category: Joi.string().valid(...Object.values(ComplaintCategories)).insensitive().required(),
-            urgency : Joi.string().valid(...Object.values(['high','medium', 'low'])).insensitive().optional()
+            urgency: Joi.string().valid(...Object.values(['high', 'medium', 'low'])).insensitive().optional()
         })
 
         const { error } = schema.validate(req.body);
@@ -52,6 +53,19 @@ class ComplaintValidator {
             order: Joi.string().valid(...Object.values(['desc', 'asc'])).optional()
         })
         const { error } = schema.validate(req.query);
+        if (error) {
+            return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
+        }
+        next();
+    }
+
+    static validateUpdateStatus(req, res, next) {
+        const schema = Joi.object({
+            status: Joi.string().valid(...Object.values(ComplainantStatus)).insensitive().required(),
+            description: Joi.string().allow('').optional()
+        })
+
+        const { error } = schema.validate(req.body);
         if (error) {
             return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
         }

@@ -70,7 +70,7 @@ class ComplaintController {
 
     async assign_vendor(data, res) {
         const responseBuilder = new ResponseBuilder();
-        const {vendor_id} = data
+        const { vendor_id } = data
         try {
             if (!(await userService.vendor_exist(vendor_id))) {
                 return responseBuilder.error(null, 'Vendor not found').status(400).send(res)
@@ -157,6 +157,26 @@ class ComplaintController {
             const complaint = await complaintService.fetchComplaintDetailInfo(complaint_id)
             return ResponseBuilder.ok({ complaint: complaint },).send(res)
 
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async update_status(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            if (!(await complaintService.isOwnerOfThisComplaint(req.params.id, req.user.role, req.user.id))) {
+                return responseBuilder.error(null, 'You do not have access to this resource').status(400).send(res)
+            }
+
+            const complaint = await complaintService.updateComplaintStatus(req.params.id, req.user.role, req.user.id, req.body.status, req.body.description)
+            return ResponseBuilder.ok({ complaint: complaint },).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)

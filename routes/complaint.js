@@ -20,4 +20,7 @@ router.get('/', authenticateAccessToken, authorizeRole(['property-owner', 'prope
 
 
 router.put('/set-schedule', authenticateAccessToken, authorizeRole(['vendor']), ComplaintValidator.validateSetSchedule, ComplaintController.set_schedule_date)
+
+router.put('/update-status/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-user', 'vendor']), ComplaintValidator.validateUpdateStatus, ComplaintController.update_status)
+
 module.exports = router

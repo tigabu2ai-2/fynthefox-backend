@@ -58,9 +58,9 @@ class ComplaintService {
         }
 
         const previous_status = complaint.status
-        const current_status = 'assigned'
+        const current_status = 'pending-vendor-acceptance'
 
-        complaint.status = 'assigned'
+        complaint.status = 'pending-vendor-acceptance'
         complaint.assigned_to = vendor.id
         complaint.eta = eta
 
@@ -163,10 +163,28 @@ class ComplaintService {
                         model: User,
                         as: 'Complainant',
                         attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
-                        include: {
-                            model: TenantInfo,
-                            attributes: ['id', 'floor_number', 'apartment_number']
-                        }
+                        include: [
+                            {
+                                model: User,
+                                as: 'Complainant',
+                                attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
+                                include: {
+                                    model: TenantInfo,
+                                    attributes: ['id', 'floor_number', 'apartment_number']
+                                }
+                            },
+                            {
+                                model: User,
+                                as: "Vendor",
+                                attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
+                                include: {
+                                    model: VendorInfo,
+                                    attributes: ['id', 'type', 'priority', 'availability']
+                                }
+
+                            },
+
+                        ]
                     },
                     {
                         model: User,
@@ -234,7 +252,8 @@ class ComplaintService {
                             attributes: ['id', 'type', 'priority', 'availability']
                         }
 
-                    }
+                    },
+
                 ]
             })
             const pagination = {
@@ -388,6 +407,45 @@ class ComplaintService {
 
         return !!complaint;
     }
+
+    async updateComplaintStatus(complaint_id, log_writer_role, log_writer_id, status, description) {
+        const complaint = await Complaint.findByPk(complaint_id);
+
+        if (!complaint) {
+            throw new CustomException("Invalid Complaint!")
+        }
+
+        const transaction = await sequelize.transaction()
+
+        const previous_status = complaint.status
+        const current_status = status
+        complaint.status = status
+        await complaint.save({ transaction: transaction })
+
+        const complaint_log = await ComplaintLog.create(
+            {
+                complaint_id: complaint.id,
+                log_type: 'status-changed',
+                detail: {
+                    complain: complaint.complain,
+                    description: description
+                },
+                previous_status: previous_status,
+                current_status: current_status,
+                log_writer_role: log_writer_role,
+                log_writer_id: log_writer_id,
+
+            },
+            {
+                transaction
+            }
+        )
+
+        await transaction.commit()
+
+        return complaint
+    }
+
 
 }
 
