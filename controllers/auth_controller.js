@@ -27,7 +27,7 @@ class AuthController {
         } catch (e) {
             logger.error(e.message, e)
             if (e instanceof CustomException) {
-                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
 
             return responseBuilder.error().status(500).send(res);
@@ -43,15 +43,15 @@ class AuthController {
             // const refresh_token = req.cookies?.refresh_token // Secure way of hanlding refresh token.
 
             const refresh_token = authHeader && authHeader.split(' ')[1];
-            
-            
+
+
             const tokens = await authService.refresh(refresh_token);
             return ResponseBuilder.ok(tokens, 'Token refreshed successfully').send(res);
         } catch (e) {
             if (e instanceof CustomException) {
-                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            return responseBuilder.error(null,e.message).status(500).send(res);
+            return responseBuilder.error(null, e.message).status(500).send(res);
         }
     }
 
@@ -60,12 +60,15 @@ class AuthController {
 
         try {
             const { email } = req.body;
-            const message = await authService.forgotPassword(email);
-            return ResponseBuilder.ok(null, message).send(res);
+            const message = `If an account exists with the provided email address, a password reset link has been sent. Please check your inbox and follow the instructions to reset your password.`
+            ResponseBuilder.ok(null, message).send(res);
+
+            await authService.forgotPassword(email);
+            return
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)
-                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
             console.log(e)
             return responseBuilder.error().status(500).send(res);
@@ -81,9 +84,9 @@ class AuthController {
             return ResponseBuilder.ok(null, message).send(res);
         } catch (e) {
             if (e instanceof CustomException) {
-                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            return responseBuilder.error(null,e.message).status(500).send(res);
+            return responseBuilder.error(null, e.message).status(500).send(res);
         }
     }
 

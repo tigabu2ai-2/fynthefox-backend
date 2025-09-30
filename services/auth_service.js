@@ -87,7 +87,8 @@ class AuthService {
     async forgotPassword(email) {
         const user = await User.findOne({ where: { email } });
         if (!user) {
-            throw new CustomException('User with this email does not exist', 404);
+            // throw new CustomException('User with this email does not exist', 404);
+            return
         }
         // Generate a reset token and set expiration
         const resetToken = jwt.sign({ id: user.id }, process.env.RESET_PASSWORD_SECRET, { expiresIn: '10m' });
