@@ -22,12 +22,9 @@ class ComplaintController {
                 return ResponseBuilder.badRequest('Invalid user!').send(res)
 
             }
-            const complaint_data = {
-                complain: complain,
-                user_id: user_id,
-                property_id: property_id
-
-            }
+            const complaint_data = req.body
+            complaint_data.property_id = property_id 
+        
             const complaint = await complaintService.createComplaint(complaint_data, agent_id, 'agent', agent_id)
             return ResponseBuilder.ok(complaint, 'Complaint created successfully').send(res);
 

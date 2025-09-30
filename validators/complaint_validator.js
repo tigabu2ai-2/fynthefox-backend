@@ -1,11 +1,14 @@
 const Joi = require('joi');
 const ResponseBuilder = require('../utils/response_builder');
+const ComplaintCategories = require('../constants/complaint_categories')
 
 class ComplaintValidator {
     static validateCreateComplaint(req, res, next) {
         const schema = Joi.object({
             user_id: Joi.string().uuid().required(),
             complain: Joi.string().required(),
+            category: Joi.string().valid(...Object.values(ComplaintCategories)).insensitive().required(),
+            urgency : Joi.string().valid(...Object.values(['high','medium', 'low'])).insensitive().optional()
         })
 
         const { error } = schema.validate(req.body);

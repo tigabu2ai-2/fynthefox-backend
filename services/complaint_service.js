@@ -2,9 +2,12 @@ const { Complaint, ComplaintLog, User, Role, Property, TenantInfo, Address, Vend
 const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg')
 
+
 class ComplaintService {
     async createComplaint(data, agent_id, log_writer_role, log_writer_id) {
-        const complaint = await Complaint.create(data)
+        const transaction = await sequelize.transaction()
+
+        const complaint = await Complaint.create(data, { transaction: transaction })
         if (complaint) {
             const complaint_log_data = {
                 complaint_id: complaint.id,
@@ -19,7 +22,9 @@ class ComplaintService {
 
             }
 
-            const complaint_log = await ComplaintLog.create(complaint_log_data)
+            const complaint_log = await ComplaintLog.create(complaint_log_data, { transaction: transaction })
+
+            await transaction.commit()
             return complaint;
         } else {
             throw new CustomException('Failed to create complaint! Please try again', 500);
@@ -143,7 +148,7 @@ class ComplaintService {
 
             // Building Search query based on the client preference --- END ----
 
-            const { rows:complaints, count } = await Complaint.findAndCountAll({
+            const { rows: complaints, count } = await Complaint.findAndCountAll({
                 where: where,
                 order: [[sort_by, order.toUpperCase()]],
                 limit: limit,
@@ -200,7 +205,7 @@ class ComplaintService {
             if (status) where.status = status
             // Building Search query based on the client preference --- END ----
 
-            const { rows:complaints, count } = await Complaint.findAndCountAll({
+            const { rows: complaints, count } = await Complaint.findAndCountAll({
                 where: where,
                 order: [[sort_by, order.toUpperCase()]],
                 limit: limit,
