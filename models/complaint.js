@@ -1,6 +1,7 @@
 const { DataTypes, Model, ENUM } = require('sequelize');
 const sequelize = require('../databases/pg');
 const ComplaintCategories = require('../constants/complaint_categories')
+const ComplainantStatus = require('../constants/complaint_status')
 
 class Complaint extends Model { }
 
@@ -34,7 +35,8 @@ Complaint.init({
         allowNull: true
     },
     status: {
-        type: ENUM('pending', 'assigned', 'scheduled', 'in-progress', 'estimate-needed', 'resident-confirmation', 'pending-vendor-acceptance', 'completed'),
+        type: ENUM,
+        values: ComplainantStatus,
         defaultValue: 'pending',
         allowNull: false
     }
@@ -47,6 +49,7 @@ Complaint.init({
         beforeCreate: async(complaint)=>{
             complaint.category = complaint.category.toLowerCase();
             complaint.urgency = complaint.urgency? complaint.urgency.toLowerCase() : undefined
+            complaint.status = complaint.status.toLowerCase()
         }
     }
 })
