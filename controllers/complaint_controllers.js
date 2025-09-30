@@ -188,6 +188,27 @@ class ComplaintController {
         }
     }
 
+    async vendor_accept_work_order(req, res) {
+        const responseBuilder = new ResponseBuilder()
+
+        try {
+            if (!(await complaintService.isOwnerOfThisComplaint(req.params.id, req.user.role, req.user.id))) {
+                return responseBuilder.error(null, 'You do not have access to this resource').status(400).send(res)
+            }
+            const complaint = await complaintService.vendorAcceptWorkOrder(req.params.id, req.user.id)
+            return ResponseBuilder.ok({ complaint: complaint },).send(res)
+
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
 }
 
 module.exports = new ComplaintController()

@@ -446,6 +446,43 @@ class ComplaintService {
         return complaint
     }
 
+    async vendorAcceptWorkOrder(complaint_id, vendor_id) {
+        const complaint = await Complaint.findOne({
+            where: {
+                id: complaint_id,
+                status: "pending-vendor-acceptance"
+            }
+        })
+        if (!complaint || complaint == null) {
+            throw new CustomException("Invalid Complaint!")
+        }
+        const transaction = await sequelize.transaction()
+        const previous_status = complaint.status
+        const current_status = "assigned"
+        complaint.status = "assigned"
+        await complaint.save({ transaction })
+
+        const complaint_log = await ComplaintLog.create(
+            {
+                complaint_id: complaint.id,
+                log_type: 'status-changed',
+                detail: {
+                    complain: complaint.complain,
+                },
+                previous_status: previous_status,
+                current_status: current_status,
+                log_writer_role: "vendor",
+                log_writer_id: vendor_id,
+
+            },
+            {
+                transaction
+            }
+        )
+
+        await transaction.commit()
+        return complaint
+    }
 
 }
 

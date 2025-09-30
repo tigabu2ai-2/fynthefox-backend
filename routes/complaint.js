@@ -4,7 +4,8 @@ const ComplaintController = require('../controllers/complaint_controllers')
 const ComplaintValidator = require('../validators/complaint_validator')
 const authenticateAccessToken = require('../middlewares/authenticate_access_token')
 const authenticateAgentAPIKey = require('../middlewares/authenticate_agent_api_key')
-const authorizeRole = require('../middlewares/authorize_role')
+const authorizeRole = require('../middlewares/authorize_role');
+const UUIDValidator = require('../validators/uuid_validator');
 
 const router = express.Router()
 
@@ -14,13 +15,15 @@ router.put('/agent/assign-vendor', authenticateAgentAPIKey, ComplaintValidator.v
 
 router.put('/assign-vendor', authenticateAccessToken, authorizeRole(['property-owner']), ComplaintValidator.validateAssignVendor, ComplaintController.assing_vendor_by_owner)
 
-router.get('/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-user', 'vendor']), ComplaintController.fetch_complaint_detail_info)
+router.get('/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-user', 'vendor']), UUIDValidator.paramIDValidator,ComplaintController.fetch_complaint_detail_info)
 
 router.get('/', authenticateAccessToken, authorizeRole(['property-owner', 'property-user', 'vendor']), ComplaintValidator.getAllValidator, ComplaintController.fetch_all_complaints)
 
 
 router.put('/set-schedule', authenticateAccessToken, authorizeRole(['vendor']), ComplaintValidator.validateSetSchedule, ComplaintController.set_schedule_date)
 
-router.put('/update-status/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-user', 'vendor']), ComplaintValidator.validateUpdateStatus, ComplaintController.update_status)
+router.put('/update-status/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-user', 'vendor']), UUIDValidator.paramIDValidator,ComplaintValidator.validateUpdateStatus, ComplaintController.update_status)
+
+router.put('/accept-work-order/:id', authenticateAccessToken, authorizeRole(['vendor']), UUIDValidator.paramIDValidator, ComplaintController.vendor_accept_work_order)
 
 module.exports = router
