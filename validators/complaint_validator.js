@@ -21,7 +21,8 @@ class ComplaintValidator {
     static validateAssignVendor(req, res, next) {
         const schema = Joi.object({
             complaint_id: Joi.string().uuid().required(),
-            vendor_id: Joi.string().uuid().required()
+            vendor_id: Joi.string().uuid().required(),
+            eta: Joi.date().optional()
         })
         const { error } = schema.validate(req.body);
         if (error) {

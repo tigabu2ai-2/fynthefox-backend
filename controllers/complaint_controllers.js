@@ -23,8 +23,8 @@ class ComplaintController {
 
             }
             const complaint_data = req.body
-            complaint_data.property_id = property_id 
-        
+            complaint_data.property_id = property_id
+
             const complaint = await complaintService.createComplaint(complaint_data, agent_id, 'agent', agent_id)
             return ResponseBuilder.ok(complaint, 'Complaint created successfully').send(res);
 
@@ -44,9 +44,12 @@ class ComplaintController {
         const complaint_id = req.body.complaint_id
         const log_writer_role = 'agent'
         const log_writer_id = req.agent.id
+        const eta = req.body.eta
+
+        const data = { vendor_id, complaint_id, log_writer_role, log_writer_id, eta }
         // TODO: Validate if the agent can modify this Compliant
         console.log("here---")
-        await new ComplaintController().assign_vendor(vendor_id, complaint_id, log_writer_role, log_writer_id, res)
+        await new ComplaintController().assign_vendor(data, res)
 
     }
 
@@ -55,21 +58,25 @@ class ComplaintController {
         const complaint_id = req.body.complaint_id
         const log_writer_role = 'property-owner'
         const log_writer_id = req.user.id
+
+        const eta = req.body.eta
+
+        const data = { vendor_id, complaint_id, log_writer_role, log_writer_id, eta }
         // TODO: Validate if the owner can modify this Compliant
         console.log('here ---- 5')
-        await new ComplaintController().assign_vendor(vendor_id, complaint_id, log_writer_role, log_writer_id, res)
+        await new ComplaintController().assign_vendor(data, res)
 
     }
 
-    async assign_vendor(vendor_id, complaint_id, log_writer_role, log_writer_id, res) {
+    async assign_vendor(data, res) {
         const responseBuilder = new ResponseBuilder();
-
+        const {vendor_id} = data
         try {
             if (!(await userService.vendor_exist(vendor_id))) {
                 return responseBuilder.error(null, 'Vendor not found').status(400).send(res)
             }
 
-            const complaint = await complaintService.assignVendor(complaint_id, vendor_id, log_writer_role, log_writer_id)
+            const complaint = await complaintService.assignVendor(data)
 
 
             return ResponseBuilder.ok({ complaint: complaint }, 'Vendor assigned successfully').send(res)
@@ -139,16 +146,16 @@ class ComplaintController {
     async fetch_complaint_detail_info(req, res) {
         const responseBuilder = new ResponseBuilder();
 
-        try { 
+        try {
             const complaint_id = req.params.id;
             const user_role = req.user.role;
             const user_id = req.user.id
-            if(!(await complaintService.isOwnerOfThisComplaint(complaint_id,user_role, user_id))){
+            if (!(await complaintService.isOwnerOfThisComplaint(complaint_id, user_role, user_id))) {
                 return responseBuilder.error(null, 'You do not have access to this resource').status(400).send(res)
             }
 
             const complaint = await complaintService.fetchComplaintDetailInfo(complaint_id)
-            return ResponseBuilder.ok({ complaint: complaint }, ).send(res)
+            return ResponseBuilder.ok({ complaint: complaint },).send(res)
 
         } catch (e) {
             if (e instanceof CustomException) {

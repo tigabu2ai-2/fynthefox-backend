@@ -33,7 +33,9 @@ class ComplaintService {
 
     }
 
-    async assignVendor(complaint_id, vendor_id, log_writer_role, log_writer_id) {
+    async assignVendor(data) {
+        const { vendor_id, complaint_id, log_writer_role, log_writer_id, eta = null } = data
+
         const transaction = await sequelize.transaction()
         const complaint = await Complaint.findByPk(complaint_id)
         if (!complaint || complaint == null) {
@@ -48,7 +50,7 @@ class ComplaintService {
                         name: 'vendor'
                     },
                 },
-                attributes: ['id', 'role_id']
+                attributes: ['id', 'role_id', 'first_name', 'last_name']
             })
         if (!vendor || vendor == null) {
             throw new CustomException('Vendor not found!')
@@ -60,6 +62,7 @@ class ComplaintService {
 
         complaint.status = 'assigned'
         complaint.assigned_to = vendor.id
+        complaint.eta = eta
 
         await complaint.save({ transaction })
 
@@ -70,6 +73,8 @@ class ComplaintService {
                 log_type: 'status-changed',
                 detail: {
                     complain: complaint.complain,
+                    vendor: `${vendor.first_name} ${vendor.last_name}`
+
                 },
                 previous_status: previous_status,
                 current_status: current_status,
