@@ -358,7 +358,7 @@ class UserService {
             attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
             include: {
                 model: VendorInfo,
-                attributes: ['type', 'priority', 'availability', 'id']
+                attributes: ['id','type', 'priority', 'status', 'availability','service_area','preferred_contact_method']
             }
         });
         if (!vendor) {
@@ -372,6 +372,8 @@ class UserService {
         vendor.VendorInfo.type = data.type ?? vendor.VendorInfo.type
         vendor.VendorInfo.priority = data.priority ?? vendor.VendorInfo.priority
         vendor.VendorInfo.availability = data.availability ?? vendor.VendorInfo.availability
+        vendor.VendorInfo.service_area = data.service_area ?? vendor.VendorInfo.service_area,
+        vendor.VendorInfo.preferred_contact_method = data.preferred_contact_method ?? vendor.VendorInfo.preferred_contact_method
 
         await vendor.VendorInfo.save()
         const vendor_updated = await vendor.save({ logging: console.log })
@@ -384,7 +386,7 @@ class UserService {
             attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
             include: {
                 model: VendorInfo,
-                attributes: ['type', 'priority', 'availability', 'id']
+                attributes: ['type', 'priority', 'status', 'availability','service_area','preferred_contact_method', 'id']
             }
         });
         if (!vendor) {
