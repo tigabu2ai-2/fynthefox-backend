@@ -1,5 +1,6 @@
 const { DataTypes, Model, ENUM } = require('sequelize');
 const sequelize = require('../databases/pg');
+const ComplaintCategories = require('../constants/complaint_categories')
 
 class Complaint extends Model { }
 
@@ -17,16 +18,37 @@ Complaint.init({
         type: DataTypes.DATE,
         allowNull: true,
     },
+    category: {
+        type: DataTypes.ENUM,
+        values: ComplaintCategories,
+        allowNull: false,
+        defaultValue: 'other'
+    },
+    urgency: {
+        type: DataTypes.ENUM('high', 'medium', 'low'),
+        allowNull: false,
+        defaultValue: "low"
+    },
+    eta: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
     status: {
         type: ENUM('pending', 'assigned', 'scheduled', 'in-progress', 'estimate-needed', 'resident-confirmation', 'pending-vendor-acceptance', 'completed'),
-        defaultValue:'pending',
-        allowNull:false
+        defaultValue: 'pending',
+        allowNull: false
     }
 }, {
     sequelize,
     modelName: 'Complaint',
     tableName: 'complaints',
-    timestamps: true
+    timestamps: true,
+    hooks:{
+        beforeCreate: async(complaint)=>{
+            complaint.category = complaint.category.toLowerCase();
+            complaint.urgency = complaint.urgency? complaint.urgency.toLowerCase() : undefined
+        }
+    }
 })
 
 module.exports = Complaint
