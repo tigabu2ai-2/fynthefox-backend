@@ -1,5 +1,6 @@
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../databases/pg');
+const VendorTypes = require("../constants/vendor_types")
 
 class VendorInfo extends Model { }
 
@@ -10,7 +11,8 @@ VendorInfo.init({
         primaryKey: true
     },
     type: {
-        type: DataTypes.ENUM('plumber', 'electrician',),
+        type: DataTypes.ENUM,
+        values: VendorTypes,
         allowNull: false
     },
     priority: {
@@ -29,7 +31,12 @@ VendorInfo.init({
     sequelize,
     modelName: 'VendorInfo',
     tableName: 'vendor_infos',
-    timestamps: true
+    timestamps: true,
+    hooks: {
+        beforeCreate: (vendor_info) => {
+            vendor_info.type = vendor_info.type.toLowerCase();
+        }
+    }
 })
 
 

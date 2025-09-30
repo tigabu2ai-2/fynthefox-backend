@@ -25,7 +25,7 @@ class UserValidator {
             email: Joi.string().email().required(),
             password: Joi.string().pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$')).message('Password must contain at least 8 characters, including uppercase, lowercase, number and special character').required(),
             phone_number: Joi.string().pattern(/^[0-9]{9,15}$/).required(),
-            type: Joi.string().valid(...Object.values(VendorTypes)).required(),
+            type: Joi.string().valid(...Object.values(VendorTypes)).insensitive().required(),
             priority: Joi.number().optional(),
             availability: Joi.object().optional()
 
