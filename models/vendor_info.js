@@ -26,6 +26,14 @@ VendorInfo.init({
     },
     availability: {
         type: DataTypes.JSON
+    },
+    service_area: {
+        type: DataTypes.JSON,
+        allowNull: false
+    },
+    preferred_contact_method: {
+        type: DataTypes.ENUM('email', 'phone', 'whatsapp'),
+        allowNull: false
     }
 }, {
     sequelize,
@@ -35,6 +43,7 @@ VendorInfo.init({
     hooks: {
         beforeCreate: (vendor_info) => {
             vendor_info.type = vendor_info.type.toLowerCase();
+            vendor_info.preferred_contact_method = vendor_info.preferred_contact_method.toLowerCase();
         }
     }
 })

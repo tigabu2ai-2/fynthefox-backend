@@ -12,7 +12,13 @@ class UserService {
         if (!role_id) throw new CustomException('Role does not exist', 400);
         const transaction = await sequelize.transaction()
         if (role_name == 'vendor') {
-            const vendor_info = await VendorInfo.create({ type: data.type, priority: data.priority, availability: data.availability }, { transaction })
+            const vendor_info = await VendorInfo.create({
+                type: data.type,
+                priority: data.priority,
+                availability: data.availability,
+                service_area: data.service_area,
+                preferred_contact_method: data.preferred_contact_method
+            }, { transaction })
             if (!vendor_info || vendor_info == null) {
                 throw new CustomException('Failed to create  vendor-info! Please try again', 500)
             }
@@ -283,7 +289,7 @@ class UserService {
                 id: updated_user.MemberOfProperty.id,
                 name: updated_user.MemberOfProperty.id
             },
-            TenantInfo:{
+            TenantInfo: {
                 id: updated_user.TenantInfo.id,
                 floor_number: updated_user.TenantInfo.floor_number,
                 apartment_number: updated_user.TenantInfo.apartment_number

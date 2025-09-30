@@ -27,7 +27,9 @@ class UserValidator {
             phone_number: Joi.string().pattern(/^[0-9]{9,15}$/).required(),
             type: Joi.string().valid(...Object.values(VendorTypes)).insensitive().required(),
             priority: Joi.number().optional(),
-            availability: Joi.object().optional()
+            availability: Joi.object().optional(),
+            service_area: Joi.array().items(Joi.string()).required(),
+            preferred_contact_method: Joi.string().valid(...Object.values(['email', 'phone', 'whatsapp'])).insensitive().required()
 
         })
         const { error } = schema.validate(req.body);
