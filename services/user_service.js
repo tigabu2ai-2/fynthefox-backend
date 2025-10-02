@@ -296,6 +296,21 @@ class UserService {
             }
         }
     }
+
+    async delete_property_user(user_id) {
+        const user = await User.findByPk(user_id, {
+            include: {
+                model: Role,
+                where: { name: "property-user" }
+            }
+        });
+        if (!user) {
+            throw new CustomException('Vendor not found!', 400)
+        }
+        await RedisAuthHelper.revokeAllToken(user_id)
+        await user.destroy()
+        return 'User deleted!'
+    }
     // Preporty-User Specific methods ----- END -----
 
     // Vendor Specific methods ----- START -----
@@ -326,10 +341,10 @@ class UserService {
                     },
                     {
                         model: VendorInfo,
-                        attributes: ['type', 'priority', 'status', 'availability','service_area','preferred_contact_method']
+                        attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method']
                     }
                 ],
-                attributes: ['id', 'first_name', 'last_name', 'status',["createdAt", "registered_on"]]
+                attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"]]
             })
             const pagination = {
                 total: count,
@@ -344,7 +359,12 @@ class UserService {
         }
     }
     async delete_vendor(user_id) {
-        const vendor = await User.findByPk(user_id);
+        const vendor = await User.findByPk(user_id, {
+            include: {
+                model: Role,
+                where: { name: "vendor" }
+            }
+        });
         if (!vendor) {
             throw new CustomException('Vendor not found!', 400)
         }
@@ -358,7 +378,7 @@ class UserService {
             attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
             include: {
                 model: VendorInfo,
-                attributes: ['id','type', 'priority', 'status', 'availability','service_area','preferred_contact_method']
+                attributes: ['id', 'type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method']
             }
         });
         if (!vendor) {
@@ -373,7 +393,7 @@ class UserService {
         vendor.VendorInfo.priority = data.priority ?? vendor.VendorInfo.priority
         vendor.VendorInfo.availability = data.availability ?? vendor.VendorInfo.availability
         vendor.VendorInfo.service_area = data.service_area ?? vendor.VendorInfo.service_area,
-        vendor.VendorInfo.preferred_contact_method = data.preferred_contact_method ?? vendor.VendorInfo.preferred_contact_method
+            vendor.VendorInfo.preferred_contact_method = data.preferred_contact_method ?? vendor.VendorInfo.preferred_contact_method
 
         await vendor.VendorInfo.save()
         const vendor_updated = await vendor.save({ logging: console.log })
@@ -383,10 +403,10 @@ class UserService {
 
     async fetch_vendor(user_id) {
         const vendor = await User.findByPk(user_id, {
-            attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id',["createdAt","registered_on"]],
+            attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id', ["createdAt", "registered_on"]],
             include: {
                 model: VendorInfo,
-                attributes: ['type', 'priority', 'status', 'availability','service_area','preferred_contact_method', 'id']
+                attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method', 'id']
             }
         });
         if (!vendor) {

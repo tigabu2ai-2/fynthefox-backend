@@ -26,6 +26,7 @@ router.get('/fetch/property-users/:id',authenticateAccessToken, authorizeRole(['
 
 router.put('/update/property-users/:id', authenticateAccessToken, authorizeRole(['property-owner']),UUIDValidator.paramIDValidator, UserValidator.validatePropertyUserUpdate,UserController.update_property_user)
 
+router.delete('/delete/property-users/:id',authenticateAccessToken, authorizeRole(['property-owner']), UUIDValidator.paramIDValidator, UserController.delete_property_user)
 
 router.get('/fetch/vendors', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner']), UserValidator.validateGetAll, UserController.fetch_all_vendors)
 

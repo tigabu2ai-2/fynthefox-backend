@@ -146,6 +146,27 @@ class UserController {
             return responseBuilder.error().status(500).send(res);
         }
     }
+
+    async delete_property_user(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try {
+            if (!(await userService.is_resident_of_owner(req.params.id, req.user.id))) {
+                return ResponseBuilder.forbidden("You do not have permission to access this resource").send(res)
+
+            }
+            const message = await userService.delete_property_user(req.params.id)
+            return responseBuilder.success(null, message).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
     // Property-User Specific controllers ----- END -----
 
 
