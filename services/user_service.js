@@ -329,7 +329,7 @@ class UserService {
                         attributes: ['type', 'priority', 'status', 'availability','service_area','preferred_contact_method']
                     }
                 ],
-                attributes: ['id', 'first_name', 'last_name', 'status']
+                attributes: ['id', 'first_name', 'last_name', 'status',["createdAt", "registered_on"]]
             })
             const pagination = {
                 total: count,
@@ -383,7 +383,7 @@ class UserService {
 
     async fetch_vendor(user_id) {
         const vendor = await User.findByPk(user_id, {
-            attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
+            attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id',["createdAt","registered_on"]],
             include: {
                 model: VendorInfo,
                 attributes: ['type', 'priority', 'status', 'availability','service_area','preferred_contact_method', 'id']
