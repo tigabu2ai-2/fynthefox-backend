@@ -132,6 +132,21 @@ class UserService {
             })
         )
     }
+
+     async delete_property_owner(owner_id) {
+        const owner = await User.findByPk(owner_id, {
+            include: {
+                model: Role,
+                where: { name: "property-owner" }
+            }
+        });
+        if (!owner) {
+            throw new CustomException('User not found!', 400)
+        }
+        await RedisAuthHelper.revokeAllToken(owner_id)
+        await owner.destroy()
+        return 'User deleted!'
+    }
     // Preporty-Owner Specific methods ----- END -----
 
 
@@ -305,7 +320,7 @@ class UserService {
             }
         });
         if (!user) {
-            throw new CustomException('Vendor not found!', 400)
+            throw new CustomException('User not found!', 400)
         }
         await RedisAuthHelper.revokeAllToken(user_id)
         await user.destroy()
@@ -366,7 +381,7 @@ class UserService {
             }
         });
         if (!vendor) {
-            throw new CustomException('Vendor not found!', 400)
+            throw new CustomException('User not found!', 400)
         }
         await RedisAuthHelper.revokeAllToken(user_id)
         await vendor.destroy()

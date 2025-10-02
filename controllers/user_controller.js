@@ -91,6 +91,21 @@ class UserController {
             return responseBuilder.error().status(500).send(res);
         }
     }
+    async delete_property_owner(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try {
+            const message = await userService.delete_property_owner(req.params.id)
+            return responseBuilder.success(null, message).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
 
     // Property-User Specific controllers ----- START -----
     async fetch_all_property_users(req, res) {
