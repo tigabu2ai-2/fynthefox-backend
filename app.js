@@ -2,7 +2,7 @@ const express = require('express');
 require('dotenv').config();
 const cors = require('cors')
 
-const Logger =require("./utils/logger")
+const Logger = require("./utils/logger")
 const logger = new Logger("Bootstrap")
 
 const errorHandler = require("./middlewares/error_handler")
@@ -20,7 +20,6 @@ const agentRoutes = require('./routes/agent')
 const complaintRoutes = require('./routes/complaint')
 const accountRoutes = require('./routes/account')
 const dashboardRoutes = require('./routes/dashboard');
-const swaggerDocRoutes = require("./routes/swagger")
 
 
 const app = express();
@@ -39,7 +38,11 @@ app.use('/api/agents', agentRoutes)
 app.use('/api/complaints', complaintRoutes)
 app.use('/api/account', accountRoutes)
 app.use('/api/dashboard', dashboardRoutes)
-app.use('/api/docs', swaggerDocRoutes)
+
+if (process.env.NODE_ENV === 'development') {
+    const swaggerDocRoutes = require("./routes/swagger")
+    app.use('/api/docs', swaggerDocRoutes)
+}
 
 app.use(errorHandler)
 
