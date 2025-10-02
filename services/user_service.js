@@ -1,4 +1,4 @@
-const { User, Role, Property, Agent, VendorInfo, Address, TenantInfo } = require('../models/index');
+const { User, Role, Property, Agent, VendorInfo, Address, TenantInfo, Subscription } = require('../models/index');
 const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg');
 const RedisAuthHelper = require('../helpers/redis_auth_helper');
@@ -85,7 +85,7 @@ class UserService {
                 where: {
                     name: "admin"
                 },
-                attributes:[]
+                attributes: []
             },
             attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email', 'phone_number']
 
@@ -151,6 +151,41 @@ class UserService {
             console.log(e)
             throw new CustomException('Failed to fetch property owners', 500)
         }
+    }
+
+    async fetch_property_owner(owner_id) {
+        const owner = await User.findByPk(owner_id, {
+            include: [
+                {
+                    model: Role,
+                    where: {
+                        name: "property-owner"
+                    },
+                    attributes: []
+                },
+                {
+                    model: Property,
+                    as: "OwnedProperties",
+                    attributes: ["name"],
+                    include: [
+                        {
+                            model: Address,
+                            attributes: ["country", "state", "city", "street", "zip_code"]
+                        },
+                        {
+                            model: Subscription
+                        }
+                    ]
+                }
+            ],
+            attributes: ["id", "first_name", "last_name", "email", "phone_number"]
+        })
+
+        if(!owner){
+            throw new CustomException("User nof found")
+        }
+        return owner
+
     }
     async is_owner_of_the_property(user_id, property_id) {
         const user = await User.findByPk(user_id, {

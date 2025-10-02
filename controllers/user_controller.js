@@ -22,9 +22,9 @@ class UserController {
 
     async fetch_all_admins(req, res) {
         const responseBuilder = new ResponseBuilder()
-        try { 
-            const {admins, pagination} = await userService.fetch_all_admins(req.query)
-            return responseBuilder.success({admins, pagination}).send(res)
+        try {
+            const { admins, pagination } = await userService.fetch_all_admins(req.query)
+            return responseBuilder.success({ admins, pagination }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)
@@ -35,11 +35,11 @@ class UserController {
         }
     }
 
-    async fetch_admin(req,res){
-         const responseBuilder = new ResponseBuilder()
-        try { 
-            const admin  = await userService.fetch_admin(req.params.id)
-            return responseBuilder.success({admin}).send(res)
+    async fetch_admin(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            const admin = await userService.fetch_admin(req.params.id)
+            return responseBuilder.success({ admin }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)
@@ -73,6 +73,20 @@ class UserController {
         try {
             const { owners, pagination } = await userService.fetch_all_property_owners(req.query)
             return responseBuilder.success({ owners, pagination }).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+    async fetch_property_owner(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            const owner = await userService.fetch_property_owner(req.params.id)
+            return responseBuilder.success({ owner }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
                 console.log(e)

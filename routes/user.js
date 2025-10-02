@@ -24,6 +24,8 @@ router.post('/register/property-owners', UserValidator.validatePropertyOwnerRegi
 
 router.get('/fetch/property-owners', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserValidator.validateGetAll, UserController.fetch_all_property_owner)
 
+router.get('/fetch/property-owners/:id',authenticateAccessToken, authorizeRole(['super-admin', 'admin']),  UserController.fetch_property_owner)
+
 router.delete('/delete/property-owners/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UUIDValidator.paramIDValidator, UserController.delete_property_owner)
 
 // Property-Owner Specific controllers ----- END -----
