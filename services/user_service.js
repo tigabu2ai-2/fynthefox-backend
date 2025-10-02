@@ -106,6 +106,21 @@ class UserService {
 
         return admin
     }
+
+    async delete_admin(admin_id) {
+        const admin = await User.findByPk(admin_id, {
+            include: {
+                model: Role,
+                where: { name: "admin" }
+            }
+        });
+        if (!admin) {
+            throw new CustomException('User not found!', 400)
+        }
+        await RedisAuthHelper.revokeAllToken(admin_id)
+        await admin.destroy()
+        return 'User deleted!'
+    }
     // Admin Specific methods ----- END -----
 
 

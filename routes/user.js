@@ -15,6 +15,8 @@ router.post('/register/admins', authenticateAccessToken, authorizeRole(['super-a
 router.get("/fetch/admins", authenticateAccessToken, authorizeRole(['super-admin']), UserValidator.validateGetAll, UserController.fetch_all_admins)
 
 router.get("/fetch/admins/:id", authenticateAccessToken, authorizeRole(['super-admin']), UserController.fetch_admin)
+
+router.delete('/delete/admins/:id', authenticateAccessToken, authorizeRole(['super-admin']), UUIDValidator.paramIDValidator, UserController.delete_admin)
 // Admin Specific controllers ----- END -----
 
 

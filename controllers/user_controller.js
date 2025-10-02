@@ -55,6 +55,22 @@ class UserController {
         }
     }
 
+     async delete_admin(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try {
+            const message = await userService.delete_admin(req.params.id)
+            return responseBuilder.success(null, message).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
     // Admin Specific controllers ----- END -----
 
 
