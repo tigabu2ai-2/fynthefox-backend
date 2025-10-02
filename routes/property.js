@@ -8,4 +8,6 @@ const router = express.Router();
 
 router.post('/create', authenticateAccessToken, authorizeRole(['property-owner']), PropertyValidator.validateCreateProperty, PropertyController.create_property);
 
-module.exports = router;
+router.get('/', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), PropertyValidator.validateGetAll, PropertyController.fetch_all),
+
+    module.exports = router;

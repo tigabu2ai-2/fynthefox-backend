@@ -22,5 +22,18 @@ class PropertyValidator {
         }
         next();
     }
+    static validateGetAll(req, res, next) {
+        const schema = Joi.object({
+            page: Joi.number().min(1).optional(),
+            limit: Joi.number().min(5).optional(),
+            sort_by: Joi.string().optional(),
+            order: Joi.string().valid(...Object.values(['desc', 'asc'])).optional()
+        })
+        const { error } = schema.validate(req.query);
+        if (error) {
+            return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
+        }
+        next();
+    }
 }
 module.exports = PropertyValidator;  

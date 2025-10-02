@@ -27,7 +27,21 @@ class PropertyController {
         } catch (e) {
             console.log(e)
             if (e instanceof CustomException) {
-                return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async fetch_all(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            const { properties, pagination } = await propertyService.fetch_all(req.query)
+            return responseBuilder.success({ properties, pagination }).send(res)
+        } catch (e) {
+            console.log(e)
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
             return responseBuilder.error().status(500).send(res);
         }
