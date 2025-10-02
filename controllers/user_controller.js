@@ -4,6 +4,9 @@ const userService = require('../services/user_service');
 const tenantInfoService = require('../services/tenant_info_service');
 
 class UserController {
+
+    // Admin Specific controllers ----- END -----
+
     async register_admin(req, res) {
         const responseBuilder = new ResponseBuilder();
 
@@ -17,22 +20,40 @@ class UserController {
         }
     }
 
-    async register_vendor(req, res) {
-        const responseBuilder = new ResponseBuilder();
-
-        try {
-            const data = req.body;
-            const user = await userService.register(data, 'vendor');
-            return ResponseBuilder.created(user, 'User registered successfully').send(res);
+    async fetch_all_admins(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try { 
+            const {admins, pagination} = await userService.fetch_all_admins(req.query)
+            return responseBuilder.success({admins, pagination}).send(res)
         } catch (e) {
-            console.log(e)
             if (e instanceof CustomException) {
-                return responseBuilder.error(null, e.message).status(500).send(res)
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
+            console.log(e)
             return responseBuilder.error().status(500).send(res);
         }
     }
 
+    async fetch_admin(req,res){
+         const responseBuilder = new ResponseBuilder()
+        try { 
+            const admin  = await userService.fetch_admin(req.params.id)
+            return responseBuilder.success({admin}).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    // Admin Specific controllers ----- END -----
+
+
+    // Property-Owner Specific controllers ----- START -----
     async register_owner(req, res) {
         const responseBuilder = new ResponseBuilder();
 
@@ -45,36 +66,6 @@ class UserController {
             return responseBuilder.error(null, e.message).status(500).send(res);
         }
     }
-
-    async register_user(req, res) {
-        const responseBuilder = new ResponseBuilder();
-
-        try {
-            const data = req.body;
-            //Create tenant info first
-            const tenantInfoData = { floor_number: data.floor_number, apartment_number: data.apartment_number };
-            const tenantInfo = await tenantInfoService.createTenantInfo(tenantInfoData);
-            data.tenant_info_id = tenantInfo.id;
-            delete data.floor_number;
-            delete data.apartment_number;
-
-            if (await userService.is_owner_of_the_property(req.user.id, data.property_id)) {
-                const user = await userService.register(data, 'property-user');
-                return ResponseBuilder.created(user, 'User registered successfully').send(res);
-            } else {
-                return responseBuilder.error('You are not the owner of this property').status(403).send(res);
-            }
-        }
-        catch (e) {
-            if (e instanceof CustomException) {
-                console.log(e)
-                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
-            }
-            console.log(e)
-            return responseBuilder.error(null, e.message).status(500).send(res);
-        }
-    }
-
 
     async fetch_all_property_owner(req, res) {
         const responseBuilder = new ResponseBuilder();
@@ -106,8 +97,39 @@ class UserController {
             return responseBuilder.error().status(500).send(res);
         }
     }
+    // Property-Owner Specific controllers ----- END -----
 
     // Property-User Specific controllers ----- START -----
+
+    async register_user(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try {
+            const data = req.body;
+            //Create tenant info first
+            const tenantInfoData = { floor_number: data.floor_number, apartment_number: data.apartment_number };
+            const tenantInfo = await tenantInfoService.createTenantInfo(tenantInfoData);
+            data.tenant_info_id = tenantInfo.id;
+            delete data.floor_number;
+            delete data.apartment_number;
+
+            if (await userService.is_owner_of_the_property(req.user.id, data.property_id)) {
+                const user = await userService.register(data, 'property-user');
+                return ResponseBuilder.created(user, 'User registered successfully').send(res);
+            } else {
+                return responseBuilder.error('You are not the owner of this property').status(403).send(res);
+            }
+        }
+        catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error(null, e.message).status(500).send(res);
+        }
+    }
+
     async fetch_all_property_users(req, res) {
         const responseBuilder = new ResponseBuilder()
         try {
@@ -186,6 +208,23 @@ class UserController {
 
 
     // Vendor Specific controllers ----- START -----
+
+    async register_vendor(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try {
+            const data = req.body;
+            const user = await userService.register(data, 'vendor');
+            return ResponseBuilder.created(user, 'User registered successfully').send(res);
+        } catch (e) {
+            console.log(e)
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(500).send(res)
+            }
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
 
     async fetch_all_vendors(req, res) {
         const responseBuilder = new ResponseBuilder();

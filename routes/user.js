@@ -8,9 +8,17 @@ const { route } = require('./dashboard');
 
 const router = express.Router();
 
+// Admin Specific controllers ----- START -----
+
 router.post('/register/admins', authenticateAccessToken, authorizeRole(['super-admin',]), UserValidator.validateAdminRegistration, UserController.register_admin);
 
+router.get("/fetch/admins", authenticateAccessToken, authorizeRole(['super-admin']), UserValidator.validateGetAll, UserController.fetch_all_admins)
 
+router.get("/fetch/admins/:id", authenticateAccessToken, authorizeRole(['super-admin']), UserController.fetch_admin)
+// Admin Specific controllers ----- END -----
+
+
+// Property-Owner Specific controllers ----- START -----
 
 router.post('/register/property-owners', UserValidator.validatePropertyOwnerRegistration, UserController.register_owner);
 
@@ -18,6 +26,10 @@ router.get('/fetch/property-owners', authenticateAccessToken, authorizeRole(['su
 
 router.delete('/delete/property-owners/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UUIDValidator.paramIDValidator, UserController.delete_property_owner)
 
+// Property-Owner Specific controllers ----- END -----
+
+
+// Property-User Specific controllers ----- START -----
 
 router.post('/register/property-users', authenticateAccessToken, authorizeRole(['property-owner']), UserValidator.validatePropertyUserRegistration, UserController.register_user);
 
@@ -29,7 +41,10 @@ router.put('/update/property-users/:id', authenticateAccessToken, authorizeRole(
 
 router.delete('/delete/property-users/:id', authenticateAccessToken, authorizeRole(['property-owner']), UUIDValidator.paramIDValidator, UserController.delete_property_user)
 
+// Property-User Specific controllers ----- END -----
 
+
+// Vendor Specific controllers ----- START -----
 
 router.post('/register/vendors', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserValidator.validateVendorRegistration, UserController.register_vendor);
 
@@ -40,4 +55,8 @@ router.get('/fetch/vendors/:id', authenticateAccessToken, authorizeRole(['super-
 router.delete('/delete/vendors/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UUIDValidator.paramIDValidator, UserController.delete_vendor)
 
 router.put('/update/vendors/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UUIDValidator.paramIDValidator, UserValidator.validateVendorUpdate, UserController.update_vendor)
+
+// Vendor Specific controllers ----- END -----
+
+
 module.exports = router;

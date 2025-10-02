@@ -44,8 +44,64 @@ class UserService {
         };
     }
 
-    // Preporty-Owner Specific methods ----- START -----
+    // Admin Specific methods ----- START -----
 
+    async fetch_all_admins(query) {
+        const { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+        const offset = (page - 1) * 10
+        const where = {}
+        if (status) where.status = status
+        const { rows: admins, count } = await User.findAndCountAll(
+            {
+                where: where,
+                order: [[sort_by, order.toUpperCase()]],
+                limit: limit,
+                offset: offset,
+                include: {
+                    model: Role,
+                    where: {
+                        name: "admin"
+                    },
+                    attributes: []
+                },
+                attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email']
+
+            }
+        )
+
+        const pagination = {
+            total: count,
+            page,
+            pages: Math.ceil(count / limit),
+            limit
+        }
+        return { admins, pagination }
+    }
+
+    async fetch_admin(admin_id) {
+        const admin = await User.findByPk(admin_id, {
+            include: {
+                model: Role,
+                where: {
+                    name: "admin"
+                },
+                attributes:[]
+            },
+            attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email', 'phone_number']
+
+
+        })
+        if (!admin) {
+            throw new CustomException("User not found!")
+        }
+
+        return admin
+    }
+    // Admin Specific methods ----- END -----
+
+
+
+    // Preporty-Owner Specific methods ----- START -----
 
     async fetch_all_property_owners(query) {
         try {
@@ -133,7 +189,7 @@ class UserService {
         )
     }
 
-     async delete_property_owner(owner_id) {
+    async delete_property_owner(owner_id) {
         const owner = await User.findByPk(owner_id, {
             include: {
                 model: Role,
