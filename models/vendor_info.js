@@ -35,7 +35,7 @@ VendorInfo.init({
         }
     },
     service_area: {
-        type: DataTypes.JSON,
+        type: DataTypes.TEXT,
         allowNull: false,
         get() {
             const raw = this.getDataValue('service_area');
