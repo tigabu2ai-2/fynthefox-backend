@@ -8,6 +8,15 @@ class UserService {
     async register(data, role_name) {
         data.password_hash = data.password
         delete data.password;
+        const user_exist = await User.findOne({
+            where: {
+                email: data.email
+            }
+        })
+
+        if (user_exist) {
+            throw new CustomException(`A user already exist with the email ${data.email}`, 400)
+        }
         const role_id = await Role.findOne({ where: { name: role_name } })
         if (!role_id) throw new CustomException('Role does not exist', 400);
         const transaction = await sequelize.transaction()
@@ -181,7 +190,7 @@ class UserService {
             attributes: ["id", "first_name", "last_name", "email", "phone_number"]
         })
 
-        if(!owner){
+        if (!owner) {
             throw new CustomException("User nof found")
         }
         return owner

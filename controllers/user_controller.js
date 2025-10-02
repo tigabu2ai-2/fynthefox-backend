@@ -16,7 +16,12 @@ class UserController {
             const user = await userService.register(data, 'admin');
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
-            return responseBuilder.error(null, e.message).status(500).send(res);
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
         }
     }
 
@@ -63,7 +68,12 @@ class UserController {
             const user = await userService.register(data, 'property-owner');
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
-            return responseBuilder.error(null, e.message).status(500).send(res);
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
         }
     }
 
@@ -131,8 +141,13 @@ class UserController {
                 const user = await userService.register(data, 'property-user');
                 return ResponseBuilder.created(user, 'User registered successfully').send(res);
             } else {
-                return responseBuilder.error('You are not the owner of this property').status(403).send(res);
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
         }
         catch (e) {
             if (e instanceof CustomException) {
