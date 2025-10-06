@@ -474,7 +474,7 @@ class UserService {
                         attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method']
                     }
                 ],
-                attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"]]
+                attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"], "email"]
             })
             const pagination = {
                 total: count,
