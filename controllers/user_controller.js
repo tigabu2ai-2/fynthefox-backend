@@ -13,7 +13,7 @@ class UserController {
         try {
             const data = req.body;
 
-            const user = await userService.register(data, 'admin');
+            const user = await userService.register(data, 'admin', req.user.id);
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
             if (e instanceof CustomException) {
@@ -55,7 +55,7 @@ class UserController {
         }
     }
 
-     async delete_admin(req, res) {
+    async delete_admin(req, res) {
         const responseBuilder = new ResponseBuilder();
 
         try {
@@ -81,7 +81,7 @@ class UserController {
         try {
             const data = req.body;
 
-            const user = await userService.register(data, 'property-owner');
+            const user = await userService.register(data, 'property-owner', req.user.id);
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
             if (e instanceof CustomException) {
@@ -145,25 +145,14 @@ class UserController {
         const responseBuilder = new ResponseBuilder();
 
         try {
-            const data = req.body;
-            //Create tenant info first
-            const tenantInfoData = { floor_number: data.floor_number, apartment_number: data.apartment_number };
-            const tenantInfo = await tenantInfoService.createTenantInfo(tenantInfoData);
-            data.tenant_info_id = tenantInfo.id;
-            delete data.floor_number;
-            delete data.apartment_number;
+            const data = req.body
 
-            if (await userService.is_owner_of_the_property(req.user.id, data.property_id)) {
-                const user = await userService.register(data, 'property-user');
+            if (await userService.is_manager_of_the_property(req.user.id, data.property_id)) {
+                const user = await userService.register(data, 'property-user', req.user.id);
                 return ResponseBuilder.created(user, 'User registered successfully').send(res);
             } else {
-            if (e instanceof CustomException) {
-                console.log(e)
-                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+                return ResponseBuilder.forbidden("You do not have permission to register a user for this property").send(res)
             }
-            console.log(e)
-            return responseBuilder.error().status(500).send(res);
-        }
         }
         catch (e) {
             if (e instanceof CustomException) {
@@ -171,7 +160,7 @@ class UserController {
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
             console.log(e)
-            return responseBuilder.error(null, e.message).status(500).send(res);
+            return responseBuilder.error().status(500).send(res);
         }
     }
 
@@ -193,12 +182,12 @@ class UserController {
     async fetch_property_user(req, res) {
         const responseBuilder = new ResponseBuilder()
         try {
-            if (req.user.role === "property-owner") {
-                if (!(await userService.is_resident_of_owner(req.params.id, req.user.id))) {
+            if (req.user.role === "property-owner" || req.user.role === "property-manager") {
+                if (!(await userService.is_resident_of_manager(req.params.id, req.user.id))) {
                     return ResponseBuilder.forbidden("You do not have permission to access this resource").send(res)
                 }
             }
-            const user = await userService.fetch_property_user(req.params.id)
+            const user = await userService.fetch_property_user(req.params.id, )
             return responseBuilder.success({ user }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
@@ -213,7 +202,7 @@ class UserController {
     async update_property_user(req, res) {
         const responseBuilder = new ResponseBuilder()
         try {
-            if (!(userService.is_resident_of_owner(req.params.id, req.user.id))) {
+            if (!(userService.is_resident_of_manager(req.params.id, req.user.id))) {
                 return ResponseBuilder.forbidden("You do not have permission to access this resource").send(res)
             }
 
@@ -233,7 +222,7 @@ class UserController {
         const responseBuilder = new ResponseBuilder();
 
         try {
-            if (!(await userService.is_resident_of_owner(req.params.id, req.user.id))) {
+            if (!(await userService.is_resident_of_manager(req.params.id, req.user.id))) {
                 return ResponseBuilder.forbidden("You do not have permission to access this resource").send(res)
 
             }
@@ -259,7 +248,7 @@ class UserController {
 
         try {
             const data = req.body;
-            const user = await userService.register(data, 'vendor');
+            const user = await userService.register(data, 'vendor', req.user.id);
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
             console.log(e)
@@ -275,7 +264,7 @@ class UserController {
         const responseBuilder = new ResponseBuilder();
 
         try {
-            const { vendors, pagination } = await userService.fetch_all_vendors(req.query)
+            const { vendors, pagination } = await userService.fetch_all_vendors(req.query, req.user.id)
             console.log(vendors)
             return responseBuilder.success({ vendors, pagination }).send(res)
         } catch (e) {
@@ -293,7 +282,7 @@ class UserController {
 
         try {
 
-            const message = await userService.delete_vendor(req.params.id)
+            const message = await userService.delete_vendor(req.params.id, req.user.id)
             return responseBuilder.success(null, message).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
@@ -310,7 +299,7 @@ class UserController {
 
         try {
 
-            const vendor = await userService.update_vendor(req.params.id, req.body)
+            const vendor = await userService.update_vendor(req.params.id, req.body, req.user.id)
 
             return responseBuilder.success(vendor, "Vendor updated successfully.").send(res)
         } catch (e) {
@@ -327,7 +316,7 @@ class UserController {
         const responseBuilder = new ResponseBuilder();
 
         try {
-            const vendor = await userService.fetch_vendor(req.params.id)
+            const vendor = await userService.fetch_vendor(req.params.id, req.user.id)
             return responseBuilder.success(vendor,).send(res)
 
         } catch (e) {

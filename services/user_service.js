@@ -1,11 +1,12 @@
-const { User, Role, Property, Agent, VendorInfo, Address, TenantInfo, Subscription } = require('../models/index');
+const { User, Role, Property, Agent, VendorInfo, Address, TenantInfo, Subscription, CompanyInfo } = require('../models/index');
 const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg');
 const RedisAuthHelper = require('../helpers/redis_auth_helper');
-const { where } = require('sequelize');
+const { Op } = require('sequelize');
+const { required } = require('joi');
 
 class UserService {
-    async register(data, role_name) {
+    async register(data, role_name, created_by) {
         data.password_hash = data.password
         delete data.password;
         const user_exist = await User.findOne({
@@ -17,44 +18,63 @@ class UserService {
         if (user_exist) {
             throw new CustomException(`A user already exist with the email ${data.email}`, 400)
         }
-        const role_id = await Role.findOne({ where: { name: role_name } })
-        if (!role_id) throw new CustomException('Role does not exist', 400);
-        const transaction = await sequelize.transaction()
-        if (role_name == 'vendor') {
-            const vendor_info = await VendorInfo.create({
-                type: data.type,
-                priority: data.priority,
-                availability: data.availability,
-                service_area: data.service_area,
-                preferred_contact_method: data.preferred_contact_method
-            }, { transaction })
-            if (!vendor_info || vendor_info == null) {
-                throw new CustomException('Failed to create  vendor-info! Please try again', 500)
-            }
-            data.vendor_info_id = vendor_info.id
-            delete data.type
-            delete data.priority
-            delete data.availability
+
+        switch (role_name) {
+            case 'admin':
+                return await this.create_admin(data, created_by)
+                break;
+            case 'property-owner':
+                return await this.create_property_owner(data, created_by)
+                break;
+            case 'property-user':
+                return await this.create_property_user(data, created_by)
+                break;
+            case 'vendor':
+                return await this.create_vendor(data, created_by)
+                break
+            default:
+                throw new CustomException('Invalid role', 400)
         }
-        data.role_id = role_id.id;
-        const user = await User.create(data, { transaction });
+        // data.role_id = role_id.id;
+        // const user = await User.create(data, { transaction });
 
-        await transaction.commit()
+        // await transaction.commit()
 
-        return {
-            id: user.id,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            phone_number: user.phone_number,
-            role: role_name,
-            status: user.status,
-            is_2fa_enabled: user.is_2fa_enabled
-        };
+        // return {
+        //     id: user.id,
+        //     first_name: user.first_name,
+        //     last_name: user.last_name,
+        //     email: user.email,
+        //     phone_number: user.phone_number,
+        //     role: role_name,
+        //     status: user.status,
+        //     is_2fa_enabled: user.is_2fa_enabled
+        // };
     }
 
     // Admin Specific methods ----- START -----
+    async create_admin(data, created_by) {
+        const admin = await User.create({
+            first_name: data.first_name,
+            last_name: data.last_name,
+            email: data.email,
+            phone_number: data.phone_number,
+            password_hash: data.password_hash,
+            role_id: (await Role.findOne({ where: { name: "admin" } })).id,
+            created_by: created_by
+        })
 
+        return {
+            id: admin.id,
+            first_name: admin.first_name,
+            last_name: admin.last_name,
+            email: admin.email,
+            phone_number: admin.phone_number,
+            role: "admin",
+            status: admin.status,
+            is_2fa_enabled: admin.is_2fa_enabled
+        }
+    }
     async fetch_all_admins(query) {
         const { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
         const offset = (page - 1) * 10
@@ -127,6 +147,34 @@ class UserService {
 
     // Preporty-Owner Specific methods ----- START -----
 
+    async create_property_owner(data, created_by) {
+        const company_info = await CompanyInfo.create({
+            name: data.company_name ?? data.first_name + ' ' + data.last_name,
+            PropertyManagers: [{
+                first_name: data.first_name,
+                last_name: data.last_name,
+                email: data.email,
+                phone_number: data.phone_number,
+                password_hash: data.password_hash,
+                role_id: (await Role.findOne({ where: { name: "property-owner" } })).id,
+                created_by: created_by,
+            }]
+        }, {
+            include: [{ model: User, as: "PropertyManagers" }]
+        }
+        )
+        return {
+            id: company_info.PropertyManagers[0].id,
+            first_name: company_info.PropertyManagers[0].first_name,
+            last_name: company_info.PropertyManagers[0].last_name,
+            email: company_info.PropertyManagers[0].email,
+            phone_number: company_info.PropertyManagers[0].phone_number,
+            role: "property-owner",
+            status: company_info.PropertyManagers[0].status,
+            is_2fa_enabled: company_info.PropertyManagers[0].is_2fa_enabled
+        }
+
+    }
     async fetch_all_property_owners(query) {
         try {
             // Building Search query based on the client preference --- START ----
@@ -153,16 +201,11 @@ class UserService {
 
                     },
                     {
-                        as: 'OwnedProperties',
-                        model: Property,
-
-                        include: {
-                            model: Address,
-                            attributes: ['country', 'state', 'city', 'street', 'zip_code']
-                        }
-                    }
+                        model: CompanyInfo,
+                        as: 'CompanyInfo',
+                    },
                 ],
-                attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt']
+                attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email']
             })
             const pagination = {
                 total: count,
@@ -188,19 +231,20 @@ class UserService {
                     attributes: []
                 },
                 {
-                    model: Property,
-                    as: "OwnedProperties",
-                    attributes: ["name"],
-                    include: [
-                        {
+                    model: CompanyInfo,
+                    as: 'CompanyInfo',
+                    attributes: ['id', 'name', 'createdAt'],
+                    include: {
+                        model: Property,
+                        as: "Properties",
+                        attributes: ['id', 'name', 'createdAt'],
+                        include: {
                             model: Address,
-                            attributes: ["country", "state", "city", "street", "zip_code"]
-                        },
-                        {
-                            model: Subscription
+                            attributes: ['country', 'state', 'city', 'street', 'zip_code']
                         }
-                    ]
-                }
+                    }
+                },
+
             ],
             attributes: ["id", "first_name", "last_name", "email", "phone_number"]
         })
@@ -211,41 +255,42 @@ class UserService {
         return owner
 
     }
-    async is_owner_of_the_property(user_id, property_id) {
+    async is_manager_of_the_property(user_id, property_id) {
         const user = await User.findByPk(user_id, {
             include: {
-                as: 'OwnedProperties',
+                as: 'CompanyInfo',
 
-                model: Property,
-                where: { id: property_id }
+                model: CompanyInfo,
+                required: true,
+                include: {
+                    as: "Properties",
+                    model: Property,
+                    where: { id: property_id },
+                    required: true
+                }
             }
         });
+
         return user ? true : false;
     }
 
-    async is_property_owner(user_id) {
-        return !!(await User.findByPk(user_id,
-            {
-                include:
-                {
-                    model: Role,
-                    where: {
-                        name: 'property-owner'
-                    }
-                }
-            }))
+    async company_exist(company_info_id) {
+
+        return !!(await CompanyInfo.findByPk(company_info_id))
+
     }
 
 
-    async is_owner_of_the_agent(user_id, agent_id) {
-        return !!(
-            await User.findByPk(user_id, {
-                include: {
-                    model: Agent,
-                    where: { id: agent_id }
-                }
-            })
-        )
+    async is_manager_of_the_agent(user_id, agent_id) {
+        const manager = await User.findByPk(user_id, {
+            attributes: ["id", "company_info_id"]
+        })
+
+        const agent = await Agent.findByPk(agent_id, {
+            where: { company_info_id: manager.company_info_id }
+        })
+
+        return agent ? true : false;
     }
 
     async delete_property_owner(owner_id) {
@@ -266,7 +311,46 @@ class UserService {
 
 
     // Preporty-User Specific methods ----- START -----
+    async create_property_user(data, created_by) {
+
+
+        const tenant_info = await TenantInfo.create({
+            floor_number: data.floor_number,
+            apartment_number: data.apartment_number,
+            property_id: data.property_id,
+            Tenant: {
+                first_name: data.first_name,
+                last_name: data.last_name,
+                email: data.email,
+                phone_number: data.phone_number,
+                password_hash: data.password_hash,
+                status: 'active',
+                role_id: (await Role.findOne({ where: { name: "property-user" } })).id,
+
+                created_by: created_by,
+            }
+        }, {
+            include: [{ model: User, as: "Tenant" }]
+        })
+        return {
+            id: tenant_info.Tenant.id,
+            first_name: tenant_info.Tenant.first_name,
+            last_name: tenant_info.Tenant.last_name,
+            email: tenant_info.Tenant.email,
+            phone_number: tenant_info.Tenant.phone_number,
+            role: "property-user",
+            status: tenant_info.Tenant.status,
+            is_2fa_enabled: tenant_info.Tenant.is_2fa_enabled,
+            TenantInfo: {
+                id: tenant_info.id,
+                floor_number: tenant_info.floor_number,
+                apartment_number: tenant_info.apartment_number
+            }
+        }
+
+    }
     async fetch_all_property_users(requester_role, requester_id, query) {
+
         // Building Search query based on the client preference --- START ----
         let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
         page = parseInt(page)
@@ -279,11 +363,20 @@ class UserService {
 
         let users = []
         let count = 0;
+
+        const requester = await User.findByPk(requester_id, {
+            attributes: ["id", "company_info_id"]
+        })
+        if (!requester) {
+            throw new CustomException("Invalid requester", 400)
+        }
+
         switch (requester_role) {
             case 'super-admin':
             case 'admin':
                 break;
             case 'property-owner':
+            case 'property-manager':
                 ; ({ rows: users, count } = await User.findAndCountAll({
                     where: where,
                     order: [[sort_by, order.toUpperCase()]],
@@ -291,6 +384,7 @@ class UserService {
                     offset: offset,
                     include: [
                         {
+                            required: true,
                             model: Role,
                             where: {
                                 name: 'property-user',
@@ -299,12 +393,20 @@ class UserService {
 
                         },
                         {
-                            as: 'MemberOfProperty',
-                            model: Property,
-                            where: { owner_id: requester_id },
-                            attributes: ['id', 'name', 'createdAt']
-                        },],
-                    attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt']
+                            model: TenantInfo,
+                            as: "TenantInfo",
+                            attributes: ["id", "floor_number", "apartment_number"],
+                            required: true,
+                            include: {
+                                model: Property,
+                                required: true,
+                                where: { company_info_id: requester.company_info_id },
+                                attributes: ['id', 'name']
+
+                            }
+                        }
+                    ],
+                    attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email']
                 }))
                 break;
             default: break
@@ -321,6 +423,7 @@ class UserService {
     }
 
     async fetch_property_user(user_id) {
+
         const user = await User.findByPk(user_id, {
             attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
 
@@ -333,12 +436,18 @@ class UserService {
                     attributes: []
 
                 },
+
                 {
-                    as: 'MemberOfProperty',
-                    model: Property
-                },
-                {
-                    model: TenantInfo
+                    model: TenantInfo,
+                    as: "TenantInfo",
+                    attributes: ['id', 'floor_number', 'apartment_number'],
+                    required: true,
+                    include: {
+                        model: Property,
+                        required: true,
+                        attributes: ['id', 'name'],
+
+                    }
                 }
             ]
         })
@@ -359,22 +468,38 @@ class UserService {
         }))
     }
 
-    async is_resident_of_owner(user_id, owner_id) {
-        return !!(await User.findByPk(user_id, {
+    async is_resident_of_manager(user_id, manager_id) {
+        const manager = await User.findByPk(manager_id, {
+            attributes: ["id", "company_info_id"]
+        })
+
+        const user = await User.findByPk(user_id, {
+            attributes: [],
             include: [
                 {
                     model: Role,
+                    required: true,
+                    attributes: [],
                     where: {
                         name: 'property-user'
                     }
                 },
                 {
-                    as: 'MemberOfProperty',
-                    model: Property,
-                    where: { owner_id: owner_id }
+                    model: TenantInfo,
+                    required: true,
+                    as: "TenantInfo",
+                    attributes: [],
+                    include: {
+                        model: Property,
+                        required: true,
+                        attributes: [],
+                        where: { company_info_id: manager.company_info_id }
+                    }
                 }
             ]
-        }))
+        })
+
+        return user ? true : false;
     }
 
     async update_property_user(user_id, data) {
@@ -385,11 +510,11 @@ class UserService {
                 attributes: []
             },
             {
-                as: 'MemberOfProperty',
-                model: Property
-            },
-            {
-                model: TenantInfo
+                model: TenantInfo,
+                as: "TenantInfo",
+                include: {
+                    model: Property,
+                }
             }
             ]
         })
@@ -401,8 +526,8 @@ class UserService {
         user.last_name = data.last_name ?? user.last_name
         user.email = data.email ?? user.email
         user.phone_number = data.phone_number ?? user.email
-        user.property_id = data.property_id ?? user.property_id
 
+        user.TenantInfo.property_id = data.property_id ?? user.TenantInfo.property_id
         user.TenantInfo.floor_number = data.floor_number ?? user.TenantInfo.floor_number
         user.TenantInfo.apartment_number = data.apartment_number ?? user.TenantInfo.apartment_number
 
@@ -415,15 +540,15 @@ class UserService {
             last_name: updated_user.last_name,
             email: updated_user.email,
             phone_number: updated_user.phone_number,
-            MemberOfProperty: {
-                id: updated_user.MemberOfProperty.id,
-                name: updated_user.MemberOfProperty.id
-            },
             TenantInfo: {
                 id: updated_user.TenantInfo.id,
                 floor_number: updated_user.TenantInfo.floor_number,
-                apartment_number: updated_user.TenantInfo.apartment_number
-            }
+                apartment_number: updated_user.TenantInfo.apartment_number,
+                Property: {
+                    id: updated_user.TenantInfo.Property.id,
+                    name: updated_user.TenantInfo.Property.name
+                }
+            },
         }
     }
 
@@ -444,7 +569,52 @@ class UserService {
     // Preporty-User Specific methods ----- END -----
 
     // Vendor Specific methods ----- START -----
-    async fetch_all_vendors(query) {
+
+    async create_vendor(data, created_by) {
+        const manager = await User.findByPk(created_by, {
+            attributes: ['id', 'company_info_id'],
+
+        })
+        if (!manager) throw new CustomException("Property Manager not found!", 400)
+        if (!manager.company_info_id) throw new CustomException("You are not authorized to create vendor! Contact admin.", 403)
+        const role_id = await Role.findOne({ where: { name: "vendor" } })
+
+        const vendor_info = await VendorInfo.create({
+            type: data.type,
+            priority: data.priority,
+            availability: data.availability,
+            service_area: data.service_area,
+            preferred_contact_method: data.preferred_contact_method,
+            company_info_id: manager.company_info_id,
+            Vendor: {
+                first_name: data.first_name,
+                last_name: data.last_name,
+                email: data.email,
+                phone_number: data.phone_number,
+                password_hash: data.password_hash,
+                role_id: role_id.id,
+                status: 'active',
+                created_by: created_by,
+            }
+        }, {
+            include: [{
+                model: User,
+                as: "Vendor"
+            }]
+        })
+
+        return {
+            id: vendor_info.Vendor.id,
+            first_name: vendor_info.Vendor.first_name,
+            last_name: vendor_info.Vendor.last_name,
+            email: vendor_info.Vendor.email,
+            phone_number: vendor_info.Vendor.phone_number,
+            role: "vendor",
+            status: vendor_info.Vendor.status,
+            is_2fa_enabled: vendor_info.Vendor.is_2fa_enabled
+        }
+    }
+    async fetch_all_vendors(query, manager_id) {
         try {
             // Building Search query based on the client preference --- START ----
             let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
@@ -454,6 +624,9 @@ class UserService {
             const where = {}
             if (status) where.status = status
 
+            const manager = await User.findByPk(manager_id, {
+                attributes: ["id", "company_info_id"]
+            })
             // Building Search query based on the client preference --- END ----
             const { rows: vendors, count } = await User.findAndCountAll({
                 where: where,
@@ -463,6 +636,7 @@ class UserService {
                 include: [
                     {
                         model: Role,
+                        required: true,
                         where: {
                             name: 'vendor',
                         },
@@ -470,8 +644,11 @@ class UserService {
 
                     },
                     {
+                        as: "VendorInfo",
                         model: VendorInfo,
-                        attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method']
+                        attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method'],
+                        where: { company_info_id: manager.company_info_id },
+                        required: true
                     }
                 ],
                 attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"], "email"]
@@ -488,12 +665,24 @@ class UserService {
             throw new CustomException('Failed to fetch property vendors', 500)
         }
     }
-    async delete_vendor(user_id) {
+    async delete_vendor(user_id, manager_id) {
+        const manager = await User.findByPk(manager_id, {
+            attributes: ["id", "company_info_id"]
+        })
+
         const vendor = await User.findByPk(user_id, {
-            include: {
+            include: [{
                 model: Role,
                 where: { name: "vendor" }
+            },
+            {
+                model: VendorInfo,
+                as: "VendorInfo",
+                where: { company_info_id: manager.company_info_id },
+                required: true,
+                attributes: []
             }
+            ]
         });
         if (!vendor) {
             throw new CustomException('User not found!', 400)
@@ -503,11 +692,18 @@ class UserService {
         return 'Vendor deleted!'
     }
 
-    async update_vendor(user_id, data) {
+    async update_vendor(user_id, data, manager_id) {
+        const manager = await User.findByPk(manager_id, {
+            attributes: ["id", "company_info_id"]
+        })
+
         const vendor = await User.findByPk(user_id, {
             attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
             include: {
                 model: VendorInfo,
+                as: "VendorInfo",
+                where: { company_info_id: manager.company_info_id },
+                required: true,
                 attributes: ['id', 'type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method']
             }
         });
@@ -531,12 +727,19 @@ class UserService {
 
     }
 
-    async fetch_vendor(user_id) {
+    async fetch_vendor(user_id, manager_id) {
+        const manager = await User.findByPk(manager_id, {
+            attributes: ["id", "company_info_id"]
+        })
+
         const vendor = await User.findByPk(user_id, {
             attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id', ["createdAt", "registered_on"]],
             include: {
                 model: VendorInfo,
-                attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method', 'id']
+                as: "VendorInfo",
+                attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method', 'id'],
+                where: { company_info_id: manager.company_info_id },
+                required: true
             }
         });
         if (!vendor) {

@@ -8,10 +8,12 @@ class AgentController {
     async create(req, res) {
         const responseBuilder = new ResponseBuilder()
         try {
-            if (!(await userService.is_property_owner(req.body.owner_id))) {
-                return ResponseBuilder.badRequest('Invalid Propert Owner').send(res)
+            if (!(await userService.company_exist(req.params.id))) {
+                return ResponseBuilder.badRequest('Invalid Company').send(res)
             }
-            const agent = await agentService.create(req.body)
+            const data = req.body
+            data.company_info_id = req.params.id
+            const agent = await agentService.create(data)
             if (!agent || agent == null) {
                 return responseBuilder.error(null, 'Failed to create agent! Please try again.').status(500).send(res)
             }
@@ -33,7 +35,7 @@ class AgentController {
 
         try {
             if (!(['super-admin', 'admin'].includes(req.user.role))) {
-                if (!(await userService.is_owner_of_the_agent(req.user.id, req.params.id))) {
+                if (!(await userService.is_manager_of_the_agent(req.user.id, req.params.id))) {
                     return ResponseBuilder.forbidden('You do not have permission to access this resource').send(res);
                 }
             }

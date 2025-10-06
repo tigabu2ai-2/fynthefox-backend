@@ -6,8 +6,8 @@ const authenticateAccessToken = require('../middlewares/authenticate_access_toke
 
 const router = express.Router();
 
-router.post('/create', authenticateAccessToken, authorizeRole(['property-owner']), PropertyValidator.validateCreateProperty, PropertyController.create_property);
+router.post('/create', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), PropertyValidator.validateCreateProperty, PropertyController.create_property);
 
-router.get('/', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), PropertyValidator.validateGetAll, PropertyController.fetch_all),
+router.get('/', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), PropertyValidator.validateGetAll, PropertyController.fetch_all),
 
     module.exports = router;

@@ -8,17 +8,8 @@ class PropertyController {
         const { name, address: addressData } = req.body;
         const responseBuilder = new ResponseBuilder();
         try {
-            const address = await addressService.createAddress(addressData);
-            if (!address) {
-                return responseBuilder.error("Failed to create address").status(500).send(res);
-            }
-            const property_data = {
-                name: name,
-                address_id: address.id,
-                owner_id: req.user.id,
-                subscription_id: null
-            }
-            const property = await propertyService.createProperty(property_data);
+          
+            const property = await propertyService.createProperty(req.body, req.user.id);
             if (!property) {
                 return responseBuilder.error("Failed to create property").status(500).send(res);
             }
@@ -36,7 +27,7 @@ class PropertyController {
     async fetch_all(req, res) {
         const responseBuilder = new ResponseBuilder()
         try {
-            const { properties, pagination } = await propertyService.fetch_all(req.query)
+            const { properties, pagination } = await propertyService.fetch_all(req.query, req.user.id)
             return responseBuilder.success({ properties, pagination }).send(res)
         } catch (e) {
             console.log(e)

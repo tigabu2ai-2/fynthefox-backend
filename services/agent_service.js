@@ -11,48 +11,35 @@ class AgentService {
     }
     async create(data) {
         try {
-            if (await Agent.findOne({ where: { owner_id: data.owner_id } })) {
-                throw new CustomException('Property Owner already have an AI Agent!', 400)
+            if (await Agent.findOne({ where: { company_info_id: data.company_info_id } })) {
+                throw new CustomException('Company already have an AI Agent!', 400)
             }
             const uuid = crypto.randomUUID() // This will be shared to the user
             const agent_api_key = crypto.createHmac("sha256", this.agent_api_key_hash_secret).update(uuid).digest('hex') // This will be stored in the DB
 
+            const channels = ["voice", "email", "whatsapp", "web_form"]
+
+            const channel_preferences = Object.fromEntries(channels.map(channel => [channel, channel === data.channel_preference]))
             const agent = await Agent.create({
-                owner_id: data.owner_id,
+                company_info_id: data.company_info_id,
                 status: 'active',
                 language: data.language,
-                api_key: agent_api_key
+                api_key: agent_api_key,
+                ChannelPreference: {
+                    ...channel_preferences
+                }
+            }, {
+                include: [{ model: ChannelPreference }]
             })
             if (!agent || agent == null) {
                 throw new CustomException('Failed to create agent! Please try again.', 500)
             }
-            const channel_pref_data = {
-                agnet_id: agent.id,
-                voice: false,
-                whatsapp: false,
-                email: false,
-                web_form: false,
-            }
-            switch (data.channel_preference) {
-                case 'voice':
-                    channel_pref_data.voice = true
-                    break;
-                case 'whatsapp':
-                    channel_pref_data.whatsapp = true
-                    break;
-                case 'email':
-                    channel_pref_data.email = true
-                    break;
-                case 'web_form':
-                    channel_pref_data.web_form = true
-                    break;
-            }
-            const channel_preference = await ChannelPreference.create(channel_pref_data)
+
             agent.api_key = uuid;
             return agent
         } catch (e) {
             console.log(e)
-            if(e instanceof CustomException){
+            if (e instanceof CustomException) {
                 throw e
             }
             throw new CustomException('Failed to create agent! Please try again.', 500)
@@ -110,11 +97,10 @@ class AgentService {
 
             agent.api_key = agent_api_key
             await agent.save()
-            console.log("----------------", uuid)
             return uuid
         } catch (e) {
             console.log(e)
-            if(e instanceof CustomException){
+            if (e instanceof CustomException) {
                 throw e
             }
             throw new CustomException('Failed to generate API Key! Please try again', 500)

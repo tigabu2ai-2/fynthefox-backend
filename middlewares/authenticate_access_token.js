@@ -21,7 +21,7 @@ async function authenticateAccessToken(req, res, next) {
     const meta = await RedisAuthHelper.verifyAccessToken(access_hash)
 
     if (!meta || meta == null) {
-        return ResponseBuilder.badRequest('Invalid or expired access token').send(res)
+        return ResponseBuilder.unauthorized('Invalid or expired access token').send(res)
     }
 
     // TODO: verify the meta data with the request meta data to verify if its the same client/agent, source ip..
