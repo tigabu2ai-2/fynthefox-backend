@@ -749,6 +749,7 @@ class UserService {
         return vendor
     }
     async vendor_exist(user_id) {
+
         return !!(await User.findByPk(user_id,
             {
                 include: {
@@ -759,6 +760,36 @@ class UserService {
                 }
             }
         ))
+    }
+
+    async is_manager_of_the_vendor(manager_id, vendor_id) {
+        const manager = await User.findByPk(manager_id, {
+            attributes: ["id", "company_info_id"]
+        })
+        if (!manager) return false;
+
+        const vendor = await User.findByPk(vendor_id, {
+            attributes: [],
+            include: [
+                {
+                    model: Role,
+                    required: true,
+                    attributes: [],
+                    where: {
+                        name: 'vendor'
+                    }
+                },
+                {
+                    model: VendorInfo,
+                    as: "VendorInfo",
+                    required: true,
+                    attributes: [],
+                    where: { company_info_id: manager.company_info_id }
+                }
+            ]
+        })
+
+        return vendor ? true : false;
     }
     // Vendor Specific methods ----- END ----- 
 

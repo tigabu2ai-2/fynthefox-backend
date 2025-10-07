@@ -1,5 +1,5 @@
 const CustomException = require('../exceptions/custom_exception');
-const { Agent, ChannelPreference, Property } = require('../models/index')
+const { Agent, ChannelPreference, Property, User, TenantInfo } = require('../models/index')
 const crypto = require('crypto')
 const bcrypt = require('bcrypt')
 
@@ -50,23 +50,31 @@ class AgentService {
         return !!(await Agent.findByPk(agent_id))
     }
 
-    async get_property_id(agent_id) {
+    async get_property_id(agent_id, user_id) {
         try {
             const agent = await Agent.findByPk(agent_id,)
             if (!agent || agent == null) {
                 throw new CustomException('Agent not found!', 400)
             }
-
-            const property = await Property.findOne({
-                where: {
-                    owner_id: agent.owner_id
-                }
+            const user = await User.findByPk(user_id, {
+                include: [
+                    {
+                        model: TenantInfo,
+                        as: "TenantInfo",
+                        required: true,
+                        include: [{
+                            model: Property,
+                            required: true,
+                            where: { company_info_id: agent.company_info_id },
+                        }]
+                    }
+                ]
             })
-
-            if (!property || property == null) {
+            console.log(user)
+            if (!user || user.TenantInfo.Property == null) {
                 throw new CustomException('Property not found!', 400)
             }
-            return property.id;
+            return user.TenantInfo.Property.id;
 
         } catch (e) {
             console.log(e)

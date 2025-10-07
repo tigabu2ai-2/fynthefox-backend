@@ -5,26 +5,25 @@ const sequelize = require('../databases/pg')
 
 class ComplaintService {
     async createComplaint(data, agent_id, log_writer_role, log_writer_id) {
-        const transaction = await sequelize.transaction()
 
-        const complaint = await Complaint.create(data, { transaction: transaction })
-        if (complaint) {
-            const complaint_log_data = {
-                complaint_id: complaint.id,
+        const complaint = await Complaint.create({
+            ...data,
+            Logs: [{
                 log_type: 'created',
                 detail: {
                     agent_id: agent_id,
-                    complain: complaint.complain,
+                    complain: data.complain,
                 },
-                current_status: complaint.status,
+                current_status: 'pending',
                 log_writer_role: log_writer_role,
                 log_writer_id: log_writer_id,
-
+            }]
+        },
+            {
+                include: [{ model: ComplaintLog, as: 'Logs' }]
             }
-
-            const complaint_log = await ComplaintLog.create(complaint_log_data, { transaction: transaction })
-
-            await transaction.commit()
+        )
+        if (complaint) {
             return complaint;
         } else {
             throw new CustomException('Failed to create complaint! Please try again', 500);
@@ -93,10 +92,10 @@ class ComplaintService {
     async setScheduleDate(complaint_id, date, log_writer_role, log_writer_id) {
         try {
             const transaction = await sequelize.transaction()
+           
             const complaint = await Complaint.findOne({
                 where: {
                     id: complaint_id,
-                    assigned_to: log_writer_id
                 }
             })
             if (!complaint || complaint == null) {
@@ -107,6 +106,7 @@ class ComplaintService {
             const current_status = 'scheduled'
 
             complaint.scheduled_date = date
+            complaint.status = 'scheduled'
             await complaint.save({ transaction })
 
             const complaint_log = await ComplaintLog.create(
@@ -152,6 +152,25 @@ class ComplaintService {
             if (status) where.status = status
 
             // Building Search query based on the client preference --- END ----
+            const user = await User.findByPk(user_id, {
+                attributes: [],
+                include: {
+                    model: TenantInfo,
+                    as: "TenantInfo",
+                    attributes: [],
+                    required: true,
+                    include: {
+                        model: Property,
+                        required: true,
+                        attributes: ["id", "company_info_id"]
+                    }
+                },
+                raw: true,
+            })
+            console.log(user)
+            if (!user) {
+                throw new CustomException('User not found!', 400)
+            }
 
             const { rows: complaints, count } = await Complaint.findAndCountAll({
                 where: where,
@@ -159,32 +178,23 @@ class ComplaintService {
                 limit: limit,
                 offset: offset,
                 include: [
+
+
                     {
                         model: User,
                         as: 'Complainant',
                         attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
-                        include: [
-                            {
-                                model: User,
-                                as: 'Complainant',
-                                attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
-                                include: {
-                                    model: TenantInfo,
-                                    attributes: ['id', 'floor_number', 'apartment_number']
+                        include: {
+                            model: TenantInfo,
+                            as: 'TenantInfo',
+                            attributes: ['id', 'floor_number', 'apartment_number'],
+                            include: {
+                                model: Property,
+                                where: {
+                                    company_info_id: user['TenantInfo.Property.company_info_id']
                                 }
-                            },
-                            {
-                                model: User,
-                                as: "Vendor",
-                                attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
-                                include: {
-                                    model: VendorInfo,
-                                    attributes: ['id', 'type', 'priority', 'availability']
-                                }
-
-                            },
-
-                        ]
+                            }
+                        }
                     },
                     {
                         model: User,
@@ -192,10 +202,13 @@ class ComplaintService {
                         attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
                         include: {
                             model: VendorInfo,
+                            as: 'VendorInfo',
                             attributes: ['id', 'type', 'priority', 'availability']
                         }
 
-                    }
+                    },
+
+
                 ]
             })
 
@@ -227,7 +240,19 @@ class ComplaintService {
             const where = { assigned_to: vendor_id } // Making to return assigned Complaints ONLY
             if (status) where.status = status
             // Building Search query based on the client preference --- END ----
+            const vendor = await User.findByPk(vendor_id, {
+                attributes: ['id'],
 
+                include: {
+                    model: VendorInfo,
+                    as: 'VendorInfo',
+                    attributes: ['id', 'company_info_id'],
+                }
+            })
+
+            if (!vendor || vendor == null) {
+                throw new CustomException('Vendor not found!', 400)
+            }
             const { rows: complaints, count } = await Complaint.findAndCountAll({
                 where: where,
                 order: [[sort_by, order.toUpperCase()]],
@@ -240,6 +265,7 @@ class ComplaintService {
                         attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
                         include: {
                             model: TenantInfo,
+                            as: 'TenantInfo',
                             attributes: ['id', 'floor_number', 'apartment_number']
                         }
                     },
@@ -249,7 +275,11 @@ class ComplaintService {
                         attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
                         include: {
                             model: VendorInfo,
-                            attributes: ['id', 'type', 'priority', 'availability']
+                            as: 'VendorInfo',
+                            attributes: ['id', 'type', 'priority', 'availability'],
+                            where: {
+                                company_info_id: vendor.VendorInfo.company_info_id
+                            }
                         }
 
                     },
@@ -282,7 +312,9 @@ class ComplaintService {
             const where = {}
             if (status) where.status = status
             // Building Search query based on the client preference --- END ----
-
+            const user = await User.findByPk(owner_id, {
+                attributes: ["id", "company_info_id"]
+            })
             const { rows: complaints, count } = await Complaint.findAndCountAll({
                 where: where, order: [[sort_by, order.toUpperCase()]],
                 limit: limit,
@@ -291,7 +323,7 @@ class ComplaintService {
                     {
                         model: Property,
                         where: {
-                            owner_id: owner_id,
+                            company_info_id: user.company_info_id
                         },
                         include: {
                             model: Address,
@@ -304,6 +336,7 @@ class ComplaintService {
                         attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
                         include: {
                             model: TenantInfo,
+                            as: 'TenantInfo',
                             attributes: ['id', 'floor_number', 'apartment_number']
                         }
                     },
@@ -313,6 +346,7 @@ class ComplaintService {
                         attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
                         include: {
                             model: VendorInfo,
+                            as: 'VendorInfo',
                             attributes: ['id', 'type', 'priority', 'availability']
                         }
 
@@ -344,6 +378,7 @@ class ComplaintService {
                         attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
                         include: {
                             model: TenantInfo,
+                            as: 'TenantInfo',
                             attributes: ['id', 'floor_number', 'apartment_number']
                         }
                     },
@@ -353,12 +388,14 @@ class ComplaintService {
                         attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
                         include: {
                             model: VendorInfo,
+                            as: 'VendorInfo',
                             attributes: ['id', 'type', 'priority', 'availability']
                         }
 
                     },
                     {
                         model: ComplaintLog,
+                        as: 'Logs',
                         attributes: ['log_type', 'previous_status', 'current_status', 'log_writer_role', 'detail'],
                         order: [['createdAt', 'DESC']]
 
@@ -378,11 +415,16 @@ class ComplaintService {
         let complaint;
         switch (user_role) {
             case 'property-owner':
+            case 'property-manager':
+                const manager = await User.findByPk(user_id, {
+                    attributes: ['id', 'company_info_id']
+                })
+                if (!manager) return false;
                 complaint = await Complaint.findByPk(complaint_id, {
                     include: {
                         model: Property,
                         where: {
-                            owner_id: user_id
+                            company_info_id: manager.company_info_id
                         }
                     }
                 })

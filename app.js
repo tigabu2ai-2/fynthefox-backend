@@ -48,7 +48,7 @@ app.use(errorHandler)
 
 async function initializeApp() {
     try {
-        await sequelize.sync({ alter: true , force: false});
+        await sequelize.sync({ alter: false , force: false});
         logger.info('Database synced');
 
         // Seed roles if they don't exist

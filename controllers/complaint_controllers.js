@@ -2,7 +2,8 @@ const CustomException = require('../exceptions/custom_exception');
 const ResponseBuilder = require('../utils/response_builder');
 const complaintService = require('../services/complaint_service')
 const agentService = require('../services/agent_service')
-const userService = require('../services/user_service')
+const userService = require('../services/user_service');
+const { bool } = require('joi');
 
 class ComplaintController {
     async create(req, res) {
@@ -17,11 +18,11 @@ class ComplaintController {
                 return ResponseBuilder.badRequest('Invalid agent!').send(res)
             }
 
-            const property_id = await agentService.get_property_id(agent_id)
-            if (!userService.is_resident_of_property(user_id, property_id)) {
-                return ResponseBuilder.badRequest('Invalid user!').send(res)
+            const property_id = await agentService.get_property_id(agent_id, req.body.user_id)
+            // if (!userService.is_resident_of_property(user_id, property_id)) {
+            //     return ResponseBuilder.badRequest('Invalid user!').send(res)
 
-            }
+            // }
             const complaint_data = req.body
             complaint_data.property_id = property_id
 
@@ -54,6 +55,8 @@ class ComplaintController {
     }
 
     async assing_vendor_by_owner(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
         const vendor_id = req.body.vendor_id
         const complaint_id = req.body.complaint_id
         const log_writer_role = 'property-owner'
@@ -62,8 +65,14 @@ class ComplaintController {
         const eta = req.body.eta
 
         const data = { vendor_id, complaint_id, log_writer_role, log_writer_id, eta }
-        // TODO: Validate if the owner can modify this Compliant
-        console.log('here ---- 5')
+        // TODO: Validate if the owner can modify this Compliant and also can the vendor be assigned
+        if (!(await userService.is_manager_of_the_vendor(req.user.id, vendor_id))) {
+            return responseBuilder.error(null, 'You are not authorized to assign this vendor').status(400).send(res)
+        }
+
+        if (!(await complaintService.isOwnerOfThisComplaint(complaint_id, req.user.role, req.user.id))) {
+            return responseBuilder.error(null, 'You do not have access to this resource').status(400).send(res)
+        }
         await new ComplaintController().assign_vendor(data, res)
 
     }
@@ -72,10 +81,6 @@ class ComplaintController {
         const responseBuilder = new ResponseBuilder();
         const { vendor_id } = data
         try {
-            if (!(await userService.vendor_exist(vendor_id))) {
-                return responseBuilder.error(null, 'Vendor not found').status(400).send(res)
-            }
-
             const complaint = await complaintService.assignVendor(data)
 
 
@@ -98,6 +103,7 @@ class ComplaintController {
             let pagination = {}
             switch (req.user.role) {
                 case 'property-owner':
+                case 'property-manager':
                     ; ({ complaints, pagination } = await complaintService.ownerViewAllComplaints(req.user.id, req.query))
 
                     break
@@ -129,7 +135,13 @@ class ComplaintController {
             const complaint_id = req.body.complaint_id
             const date = req.body.date
             const log_writer_id = req.user.id
-            const complaint = await complaintService.setScheduleDate(complaint_id, date, 'vendor', log_writer_id)
+
+            if (!(await complaintService.isOwnerOfThisComplaint(complaint_id, req.user.role, req.user.id))) {
+                return responseBuilder.error(null, 'You do not have access to this resource').status(400).send(res)
+            }
+
+            const complaint = await complaintService.setScheduleDate(complaint_id, date, req.user.role, log_writer_id)
+
             return ResponseBuilder.ok({ complaint: complaint }, 'Schedule  successfully set').send(res)
 
         } catch (e) {

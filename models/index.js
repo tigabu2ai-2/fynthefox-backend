@@ -35,8 +35,8 @@ User.belongsTo(Role, { foreignKey: 'role_id' });
 // Property.hasMany(User, {as:"Members" ,foreignKey: 'property_id', onDelete: 'SET NULL' });
 // User.belongsTo(Property, {as:"MemberOfProperty", foreignKey: 'property_id' });
 
-TenantInfo.hasOne(User, {as:"Tenant", foreignKey: 'tenant_info_id', onDelete: 'SET NULL' });
-User.belongsTo(TenantInfo, {as:"TenantInfo", foreignKey: 'tenant_info_id' });
+TenantInfo.hasOne(User, { as: "Tenant", foreignKey: 'tenant_info_id', onDelete: 'SET NULL' });
+User.belongsTo(TenantInfo, { as: "TenantInfo", foreignKey: 'tenant_info_id' });
 
 Property.hasMany(TenantInfo, { foreignKey: 'property_id', onDelete: 'CASCADE' });
 TenantInfo.belongsTo(Property, { foreignKey: 'property_id' });
@@ -56,8 +56,8 @@ Complaint.belongsTo(Property, { foreignKey: 'property_id' })
 
 
 // Creating association between complaint and complain_log
-Complaint.hasMany(ComplaintLog, { foreignKey: 'complaint_id', onDelete: 'CASCADE' })
-ComplaintLog.belongsTo(Complaint)
+Complaint.hasMany(ComplaintLog, { as: 'Logs', foreignKey: 'complaint_id', onDelete: 'CASCADE' })
+ComplaintLog.belongsTo(Complaint, { as: 'Complaint', foreignKey: 'complaint_id' })
 
 
 
@@ -70,16 +70,16 @@ Agent.hasOne(ChannelPreference, { foreignKey: 'agent_id', onDelete: 'CASCADE' })
 ChannelPreference.belongsTo(Agent, { foreignKey: 'agent_id' })
 
 // Createing association between CompanyInfo and Property Owner
-CompanyInfo.hasMany(User, {as:"PropertyManagers", foreignKey: 'company_info_id', onDelete: 'SET NULL' })
-User.belongsTo(CompanyInfo, {as:"CompanyInfo", foreignKey: 'company_info_id' })
+CompanyInfo.hasMany(User, { as: "PropertyManagers", foreignKey: 'company_info_id', onDelete: 'SET NULL' })
+User.belongsTo(CompanyInfo, { as: "CompanyInfo", foreignKey: 'company_info_id' })
 
 // Creating association between Vendor and vendor-info
-VendorInfo.hasOne(User, {as:"Vendor", foreignKey: 'vendor_info_id', onDelete: 'SET NULL' })
-User.belongsTo(VendorInfo, {as:"VendorInfo", foreignKey: 'vendor_info_id' })
+VendorInfo.hasOne(User, { as: "Vendor", foreignKey: 'vendor_info_id', onDelete: 'SET NULL' })
+User.belongsTo(VendorInfo, { as: "VendorInfo", foreignKey: 'vendor_info_id' })
 
 //Creating association between CompanyInfo and VendorInfo
-CompanyInfo.hasMany(VendorInfo, {as:"Vendors", foreignKey: 'company_info_id', onDelete: 'SET NULL' })
-VendorInfo.belongsTo(CompanyInfo, {as:"CompanyInfo", foreignKey: 'company_info_id' })
+CompanyInfo.hasMany(VendorInfo, { as: "Vendors", foreignKey: 'company_info_id', onDelete: 'SET NULL' })
+VendorInfo.belongsTo(CompanyInfo, { as: "CompanyInfo", foreignKey: 'company_info_id' })
 
 // Creating association between CreatedUsers and Creator
 User.hasMany(User, { as: 'CreatedUsers', foreignKey: 'created_by', onDelete: 'SET NULL' })
