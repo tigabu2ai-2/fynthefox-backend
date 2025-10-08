@@ -12,7 +12,7 @@ class User extends Model {
         return await bcrypt.compare(password, this.password_hash)
     }
 
-    async hashPassword(password){
+    async hashPassword(password) {
         const salt = await bcrypt.genSalt(10);
         return await bcrypt.hash(password, salt);
     }
@@ -49,31 +49,31 @@ User.init({
             len: [9, 15]
         }
     },
-    is_2fa_enabled:{
+    is_2fa_enabled: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
-    status:{
-        type: DataTypes.ENUM('active', 'pending', 'banned','locked'),
+    status: {
+        type: DataTypes.ENUM('active', 'pending', 'banned', 'locked', 'suspended'),
         defaultValue: 'pending',
     },
-    reset_password_token:{
+    reset_password_token: {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    reset_password_expires:{
+    reset_password_expires: {
         type: DataTypes.DATE,
         allowNull: true,
     },
-    
+
 
 }, {
-    sequelize, 
-    modelName:'User',
+    sequelize,
+    modelName: 'User',
     tableName: 'users',
     timestamps: true,
-    hooks:{
-        beforeCreate: async(user)=>{
+    hooks: {
+        beforeCreate: async (user) => {
             console.log('Hashing password before creating user');
             console.log(user)
             const salt = await bcrypt.genSalt(10);
