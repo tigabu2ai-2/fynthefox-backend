@@ -55,7 +55,21 @@ class UserValidator {
         }
         next();
     }
+    static validatePropertyManagerRegistration(req, res, next) {
+        const schema = Joi.object({
+            first_name: Joi.string().min(2).max(30).required(),
+            last_name: Joi.string().min(2).max(30).required(),
+            email: Joi.string().email().required(),
+            password: Joi.string().pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$')).message('Password must contain at least 8 characters, including uppercase, lowercase, number and special character').required(),
+            phone_number: Joi.string().pattern(/^[0-9]{9,15}$/).required(),
 
+        })
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
+        }
+        next();
+    }
     static validatePropertyUserRegistration(req, res, next) {
         const schema = Joi.object({
             first_name: Joi.string().min(2).max(30).required(),
@@ -106,6 +120,22 @@ class UserValidator {
         next();
     }
 
+    static validatePropertyManagerUpdate(req, res, next) {
+        const schema = Joi.object({
+            first_name: Joi.string().min(2).max(30).optional(),
+            last_name: Joi.string().min(2).max(30).optional(),
+            email: Joi.string().email().optional(),
+            phone_number: Joi.string().pattern(/^[0-9]{9,15}$/).optional(),
+            status: Joi.string().valid(...Object.values(['active', 'suspended'])).optional(),
+
+        })
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
+        }
+        next();
+    }
+
     static validateVendorUpdate(req, res, next) {
         const schema = Joi.object({
             first_name: Joi.string().min(2).max(30).optional(),
@@ -115,7 +145,7 @@ class UserValidator {
             type: Joi.string().valid(...Object.values(VendorTypes)).optional(),
             priority: Joi.number().optional(),
             availability: Joi.object().optional(),
-             service_area: Joi.array().items(Joi.string()).optional(),
+            service_area: Joi.array().items(Joi.string()).optional(),
             preferred_contact_method: Joi.string().valid(...Object.values(['email', 'phone', 'whatsapp'])).insensitive().optional()
         })
 

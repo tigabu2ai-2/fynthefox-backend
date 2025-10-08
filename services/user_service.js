@@ -26,6 +26,9 @@ class UserService {
             case 'property-owner':
                 return await this.create_property_owner(data, created_by)
                 break;
+            case 'property-manager':
+                return await this.create_property_manager(data, created_by)
+                break;
             case 'property-user':
                 return await this.create_property_user(data, created_by)
                 break;
@@ -308,8 +311,138 @@ class UserService {
     }
     // Preporty-Owner Specific methods ----- END -----
 
+    // Preporty-Manager Specific methods ----- START -----
+    async create_property_manager(data, created_by) {
+        const owner = await User.findByPk(created_by, {
+            attributes: ['id', 'company_info_id'],
+        })
+        console.log(data)
+        const manager = await User.create({
+            first_name: data.first_name,
+            last_name: data.last_name,
+            email: data.email,
+            phone_number: data.phone_number,
+            password_hash: data.password_hash,
+            status: 'active',
+            role_id: (await Role.findOne({ where: { name: "property-manager" } })).id,
+            created_by: created_by,
+            company_info_id: owner.company_info_id
+        })
 
-    // Preporty-User Specific methods ----- START -----
+        return {
+            id: manager.id,
+            first_name: manager.first_name,
+            last_name: manager.last_name,
+            email: manager.email,
+            phone_number: manager.phone_number,
+            role: "property-manager",
+            status: manager.status,
+            is_2fa_enabled: manager.is_2fa_enabled
+        }
+    }
+
+    async fetch_all_property_managers(query, owner_id) {
+        const owner = await User.findByPk(owner_id, {
+            attributes: ["id", "company_info_id"]
+        })
+
+        const { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+        const offset = (page - 1) * 10
+
+        const { rows: managers, count } = await User.findAndCountAll({
+            where: {
+                company_info_id: owner.company_info_id,
+            },
+            include: {
+                model: Role,
+                where: { name: "property-manager" },
+                attributes: [],
+                required: true
+            },
+            attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email']
+        })
+        const pagination = {
+            total: count,
+            page,
+            limit,
+            totalPages: Math.ceil(count / limit)
+        }
+        return { managers, pagination }
+    }
+
+    async fetch_property_manager(manager_id, owner_id) {
+        const owner = await User.findByPk(owner_id, {
+            attributes: ["id", "company_info_id"]
+        })
+
+        const manager = await User.findByPk(manager_id, {
+            where: { company_info_id: owner.company_info_id },
+            include: {
+                model: Role,
+                where: { name: "property-manager" },
+                attributes: [],
+                required: true
+            },
+            attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email', 'phone_number']
+
+        })
+
+        return manager
+    }
+
+    async update_property_manager(manager_id, data, owner_id) {
+        const owner = await User.findByPk(owner_id, {
+            attributes: ["id", "company_info_id"]
+        })
+
+        const manager = await User.findByPk(manager_id, {
+            where: { company_info_id: owner.company_info_id },
+            include: {
+                model: Role,
+                where: { name: "property-manager" },
+                attributes: [],
+                required: true
+            },
+            attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email', 'phone_number']
+        })
+
+        if (!manager) {
+            throw new CustomException("Property manager not found!")
+        }
+        manager.first_name = data.first_name ?? manager.first_name
+        manager.last_name = data.last_name ?? manager.last_name
+        manager.email = data.email ?? manager.email
+        manager.phone_number = data.phone_number ?? manager.phone_number
+        manager.status = data.status ?? manager.status
+        const updated_manager = await manager.save()
+        return updated_manager
+    }
+
+    async delete_property_manager(manager_id, owner_id) {
+        const owner = await User.findByPk(owner_id, {
+            attributes: ["id", "company_info_id"]
+        })
+
+        const manager = await User.findByPk(manager_id, {
+            where: { company_info_id: owner.company_info_id },
+            include: {
+                model: Role,
+                where: { name: "property-manager" },
+                attributes: [],
+                required: true
+            }
+        })
+
+        if (!manager) {
+            throw new CustomException("Property manager not found!")
+        }
+
+        await manager.destroy()
+        return { message: "Property manager deleted successfully!" }
+    }
+    // Property-Manager Specific methods ----- END -----
+
+    // Property-User Specific methods ----- START -----
     async create_property_user(data, created_by) {
 
 

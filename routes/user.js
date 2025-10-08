@@ -47,6 +47,19 @@ router.delete('/delete/property-users/:id', authenticateAccessToken, authorizeRo
 
 // Property-User Specific controllers ----- END -----
 
+// Property-Manager Specific controllers ----- START -----
+router.post('/register/property-managers', authenticateAccessToken, authorizeRole(['property-owner']), UserValidator.validatePropertyManagerRegistration, UserController.register_property_manager);
+
+router.get('/fetch/property-managers', authenticateAccessToken, authorizeRole(['property-owner']), UserValidator.validateGetAll, UserController.fetch_all_property_managers)
+
+router.get('/fetch/property-managers/:id', authenticateAccessToken, authorizeRole(['property-owner']), UUIDValidator.paramIDValidator, UserController.fetch_property_manager)
+
+router.put('/update/property-managers/:id', authenticateAccessToken, authorizeRole(['property-owner']), UUIDValidator.paramIDValidator, UserValidator.validatePropertyManagerUpdate, UserController.update_property_manager)
+
+router.delete('/delete/property-managers/:id', authenticateAccessToken, authorizeRole(['property-owner']), UUIDValidator.paramIDValidator, UserController.delete_property_manager)
+// Property-Manager Specific controllers ----- END -----
+
+
 
 // Vendor Specific controllers ----- START -----
 

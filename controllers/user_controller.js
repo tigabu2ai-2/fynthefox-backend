@@ -139,6 +139,84 @@ class UserController {
     }
     // Property-Owner Specific controllers ----- END -----
 
+    // Property-Manager Specific controllers ----- START -----
+    async register_property_manager(req, res) {
+        const responseBuilder = new ResponseBuilder();
+        try {
+            const manager = await userService.register(req.body, 'property-manager', req.user.id);
+            return ResponseBuilder.created(manager, 'Property Manager created successfully').send(res);
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async fetch_all_property_managers(req, res) {
+        const responseBuilder = new ResponseBuilder();
+        try {
+            const { managers, pagination } = await userService.fetch_all_property_managers(req.query, req.user.id);
+            return responseBuilder.success({ managers, pagination }).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async fetch_property_manager(req, res) {
+        const responseBuilder = new ResponseBuilder();
+        try {
+            const manager = await userService.fetch_property_manager(req.params.id, req.user.id)
+            return ResponseBuilder.ok({ manager }).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async update_property_manager(req, res) {
+        const responseBuilder = new ResponseBuilder();
+        try {
+            const manager = await userService.update_property_manager(req.params.id, req.body, req.user.id)
+            return ResponseBuilder.ok({ manager }).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async delete_property_manager(req, res) {
+        const responseBuilder = new ResponseBuilder();
+        try {
+            const message = await userService.delete_property_manager(req.params.id, req.user.id)
+            return responseBuilder.success(null, message).send(res)
+         } catch (e) {
+            if (e instanceof CustomException) {
+                console.log(e)
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            console.log(e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+    // Property-Manager Specific controllers ----- END -----
+
+
     // Property-User Specific controllers ----- START -----
 
     async register_user(req, res) {
@@ -187,7 +265,7 @@ class UserController {
                     return ResponseBuilder.forbidden("You do not have permission to access this resource").send(res)
                 }
             }
-            const user = await userService.fetch_property_user(req.params.id, )
+            const user = await userService.fetch_property_user(req.params.id,)
             return responseBuilder.success({ user }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
