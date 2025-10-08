@@ -13,7 +13,11 @@ const ROLES = [
         description: 'Property manager or owner who can request and manage Fyn the Fox agents. Has access to the agent management dashboard, configuration settings, vendor directory, and can monitor property maintenance requests.',
 
     },
+    {
+        name: 'property-manager',
+        description: 'Property manager who can oversee multiple properties, manage tenant requests, and coordinate maintenance activities. Has access to the property management dashboard and can communicate with vendors and property owners.',
 
+    },
     {
         name: 'vendor',
         description: 'Service provider role for plumbers, electricians, and other contractors. Can view assigned work orders, update job statuses, communicate with property owners, and manage their service availability.',
