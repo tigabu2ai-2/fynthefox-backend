@@ -4,6 +4,9 @@ const agentService = require('../services/agent_service')
 const userService = require('../services/user_service')
 const ResponseBuilder = require('../utils/response_builder')
 
+const Logger = require("../utils/logger")
+const logger = new Logger('AgentController')
+
 class AgentController {
     async create(req, res) {
         const responseBuilder = new ResponseBuilder()
@@ -21,11 +24,9 @@ class AgentController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -44,11 +45,9 @@ class AgentController {
             return ResponseBuilder.ok({ api_key: api_key }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }

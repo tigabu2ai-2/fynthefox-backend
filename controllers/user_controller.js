@@ -3,6 +3,9 @@ const ResponseBuilder = require('../utils/response_builder');
 const userService = require('../services/user_service');
 const tenantInfoService = require('../services/tenant_info_service');
 
+const Logger = require("../utils/logger")
+const logger = new Logger('UserController')
+
 class UserController {
 
     // Admin Specific controllers ----- END -----
@@ -17,10 +20,9 @@ class UserController {
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -32,10 +34,9 @@ class UserController {
             return responseBuilder.success({ admins, pagination }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -47,10 +48,9 @@ class UserController {
             return responseBuilder.success({ admin }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -63,10 +63,9 @@ class UserController {
             return responseBuilder.success(null, message).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -85,10 +84,9 @@ class UserController {
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -101,10 +99,9 @@ class UserController {
             return responseBuilder.success({ owners, pagination }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -115,10 +112,9 @@ class UserController {
             return responseBuilder.success({ owner }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -130,10 +126,9 @@ class UserController {
             return responseBuilder.success(null, message).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -147,10 +142,9 @@ class UserController {
             return ResponseBuilder.created(manager, 'Property Manager created successfully').send(res);
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -162,10 +156,9 @@ class UserController {
             return responseBuilder.success({ managers, pagination }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -177,10 +170,9 @@ class UserController {
             return ResponseBuilder.ok({ manager }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -192,10 +184,9 @@ class UserController {
             return ResponseBuilder.ok({ manager }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -207,10 +198,9 @@ class UserController {
             return responseBuilder.success(null, message).send(res)
          } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -234,10 +224,9 @@ class UserController {
         }
         catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -249,10 +238,9 @@ class UserController {
             return responseBuilder.success({ users, pagination }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -269,10 +257,9 @@ class UserController {
             return responseBuilder.success({ user }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -288,10 +275,9 @@ class UserController {
             return responseBuilder.success(updated_user).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -308,10 +294,9 @@ class UserController {
             return responseBuilder.success(null, message).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -329,10 +314,10 @@ class UserController {
             const user = await userService.register(data, 'vendor', req.user.id);
             return ResponseBuilder.created(user, 'User registered successfully').send(res);
         } catch (e) {
-            console.log(e)
             if (e instanceof CustomException) {
                 return responseBuilder.error(null, e.message).status(500).send(res)
             }
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -343,14 +328,12 @@ class UserController {
 
         try {
             const { vendors, pagination } = await userService.fetch_all_vendors(req.query, req.user.id)
-            console.log(vendors)
             return responseBuilder.success({ vendors, pagination }).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -364,10 +347,9 @@ class UserController {
             return responseBuilder.success(null, message).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -382,10 +364,9 @@ class UserController {
             return responseBuilder.success(vendor, "Vendor updated successfully.").send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -399,10 +380,9 @@ class UserController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }

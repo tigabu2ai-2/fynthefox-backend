@@ -3,6 +3,9 @@ const userService = require('../services/user_service')
 const authService = require('../services/auth_service')
 const ResponseBuilder = require('../utils/response_builder')
 
+const Logger = require("../utils/logger")
+const logger = new Logger('AccountController')
+
 class AccountController {
     async fetch_user_info(req, res) {
         const responseBuilder = new ResponseBuilder()
@@ -27,11 +30,9 @@ class AccountController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -58,27 +59,23 @@ class AccountController {
             return responseBuilder.success(user).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
 
     async change_password(req, res) {
         const responseBuilder = new ResponseBuilder()
-        try { 
+        try {
             const message = await authService.changePassword(req.user.id, req.body)
             return responseBuilder.success(null, message).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }

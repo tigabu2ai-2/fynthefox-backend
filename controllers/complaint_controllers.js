@@ -3,7 +3,8 @@ const ResponseBuilder = require('../utils/response_builder');
 const complaintService = require('../services/complaint_service')
 const agentService = require('../services/agent_service')
 const userService = require('../services/user_service');
-const { bool } = require('joi');
+const Logger = require("../utils/logger")
+const logger = new Logger('ComplaintController')
 
 class ComplaintController {
     async create(req, res) {
@@ -31,49 +32,61 @@ class ComplaintController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
 
     }
-    async assing_vendor_by_agent(req, res) {
-        const vendor_id = req.body.vendor_id
-        const complaint_id = req.body.complaint_id
-        const log_writer_role = 'agent'
-        const log_writer_id = req.agent.id
-        const eta = req.body.eta
+    async assign_vendor_by_agent(req, res) {
+        const responseBuilder = new ResponseBuilder();
+        try {
+            const vendor_id = req.body.vendor_id
+            const complaint_id = req.body.complaint_id
+            const log_writer_role = 'agent'
+            const log_writer_id = req.agent.id
+            const eta = req.body.eta
 
-        const data = { vendor_id, complaint_id, log_writer_role, log_writer_id, eta }
-        // TODO: Validate if the agent can modify this Compliant
-        console.log("here---")
-        await new ComplaintController().assign_vendor(data, res)
+            const data = { vendor_id, complaint_id, log_writer_role, log_writer_id, eta }
+            // TODO: Validate if the agent can modify this Compliant
+            await new ComplaintController().assign_vendor(data, res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
+        }
 
     }
 
     async assing_vendor_by_owner(req, res) {
         const responseBuilder = new ResponseBuilder();
+        try {
+            const vendor_id = req.body.vendor_id
+            const complaint_id = req.body.complaint_id
+            const log_writer_role = 'property-owner'
+            const log_writer_id = req.user.id
 
-        const vendor_id = req.body.vendor_id
-        const complaint_id = req.body.complaint_id
-        const log_writer_role = 'property-owner'
-        const log_writer_id = req.user.id
+            const eta = req.body.eta
 
-        const eta = req.body.eta
+            const data = { vendor_id, complaint_id, log_writer_role, log_writer_id, eta }
+            if (!(await userService.is_manager_of_the_vendor(req.user.id, vendor_id))) {
+                return responseBuilder.error(null, 'You are not authorized to assign this vendor').status(400).send(res)
+            }
 
-        const data = { vendor_id, complaint_id, log_writer_role, log_writer_id, eta }
-        // TODO: Validate if the owner can modify this Compliant and also can the vendor be assigned
-        if (!(await userService.is_manager_of_the_vendor(req.user.id, vendor_id))) {
-            return responseBuilder.error(null, 'You are not authorized to assign this vendor').status(400).send(res)
+            if (!(await complaintService.isOwnerOfThisComplaint(complaint_id, req.user.role, req.user.id))) {
+                return responseBuilder.error(null, 'You do not have access to this resource').status(400).send(res)
+            }
+            await new ComplaintController().assign_vendor(data, res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
         }
-
-        if (!(await complaintService.isOwnerOfThisComplaint(complaint_id, req.user.role, req.user.id))) {
-            return responseBuilder.error(null, 'You do not have access to this resource').status(400).send(res)
-        }
-        await new ComplaintController().assign_vendor(data, res)
 
     }
 
@@ -87,11 +100,9 @@ class ComplaintController {
             return ResponseBuilder.ok({ complaint: complaint }, 'Vendor assigned successfully').send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -120,11 +131,9 @@ class ComplaintController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -146,11 +155,9 @@ class ComplaintController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -171,11 +178,9 @@ class ComplaintController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -191,11 +196,9 @@ class ComplaintController {
             return ResponseBuilder.ok({ complaint: complaint },).send(res)
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -212,11 +215,9 @@ class ComplaintController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }

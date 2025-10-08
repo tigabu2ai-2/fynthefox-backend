@@ -7,6 +7,9 @@ const ResponseBuilder = require('../utils/response_builder');
 const CustomException = require('../exceptions/custom_exception')
 const RedisAuthHelper = require('../helpers/redis_auth_helper')
 
+const Logger = require("../utils/logger")
+const logger = new Logger('AuthenticateRefreshTokenMiddleware')
+
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 const REFRESH_TOKEN_HASH_SECRET = process.env.REFRESH_TOKEN_HASH_SECRET
 
@@ -42,11 +45,10 @@ async function authenticateRefreshToken(req, res, next) {
         });
     } catch (e) {
         if (e instanceof CustomException) {
-            console.log(e)
             return responseBuilder.error(null,e.message).status(e.statusCode).send(res);
         }
-        console.log(e)
-        return responseBuilder.error().status(e.statusCode).send(res);
+        logger.error(e.message, e)
+        return responseBuilder.error().status(500).send(res);
     }
 
 }

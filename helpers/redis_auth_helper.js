@@ -89,8 +89,6 @@ class RedisAuthHelper {
         if (!data) return null; //invalid or expired
 
         const meta = JSON.parse(data)
-console.log(meta)
-        console.log(data)
         return meta;
 
     }
@@ -100,7 +98,7 @@ console.log(meta)
 
         if (!data) return null; // Invalid or expired access token
         const meta = JSON.parse(data)
-        
+
 
         return meta;
     }

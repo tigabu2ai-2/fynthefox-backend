@@ -11,7 +11,7 @@ const router = express.Router()
 
 router.post('/agent/create', authenticateAgentAPIKey, ComplaintValidator.validateCreateComplaint, ComplaintController.create)
 
-router.put('/agent/assign-vendor', authenticateAgentAPIKey, ComplaintValidator.validateAssignVendor, ComplaintController.assing_vendor_by_agent)
+router.put('/agent/assign-vendor', authenticateAgentAPIKey, ComplaintValidator.validateAssignVendor, ComplaintController.assign_vendor_by_agent)
 
 router.put('/assign-vendor', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager',]), ComplaintValidator.validateAssignVendor, ComplaintController.assing_vendor_by_owner)
 

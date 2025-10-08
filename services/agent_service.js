@@ -38,7 +38,6 @@ class AgentService {
             agent.api_key = uuid;
             return agent
         } catch (e) {
-            console.log(e)
             if (e instanceof CustomException) {
                 throw e
             }
@@ -70,14 +69,12 @@ class AgentService {
                     }
                 ]
             })
-            console.log(user)
             if (!user || user.TenantInfo.Property == null) {
                 throw new CustomException('Property not found!', 400)
             }
             return user.TenantInfo.Property.id;
 
         } catch (e) {
-            console.log(e)
             throw new CustomException('Failed to fetch property! Please try again', 500)
         }
     }
@@ -107,7 +104,6 @@ class AgentService {
             await agent.save()
             return uuid
         } catch (e) {
-            console.log(e)
             if (e instanceof CustomException) {
                 throw e
             }

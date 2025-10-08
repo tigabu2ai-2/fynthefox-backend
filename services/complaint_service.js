@@ -129,7 +129,6 @@ class ComplaintService {
             await transaction.commit()
             return complaint
         } catch (e) {
-            console.log(e)
             if (e instanceof CustomException) {
                 throw e
             }
@@ -167,7 +166,6 @@ class ComplaintService {
                 },
                 raw: true,
             })
-            console.log(user)
             if (!user) {
                 throw new CustomException('User not found!', 400)
             }
@@ -218,10 +216,8 @@ class ComplaintService {
                 pages: Math.ceil(count / limit),
                 limit
             }
-            console.log(complaints)
             return { complaints, pagination };
         } catch (e) {
-            console.log(e)
             throw new CustomException('Failed to fetch complaints! Please try again', 500)
         }
 
@@ -294,7 +290,6 @@ class ComplaintService {
             }
             return { complaints, pagination };
         } catch (e) {
-            console.log(e)
             throw new CustomException('Failed to fetch complaints! Please try again', 500)
         }
 
@@ -362,7 +357,6 @@ class ComplaintService {
             }
             return { complaints, pagination };
         } catch (e) {
-            console.log(e)
             throw new CustomException('Failed to fetch complaints! Please try again', 500)
         }
 
@@ -405,7 +399,6 @@ class ComplaintService {
 
             return complaint
         } catch (e) {
-            console.log(e)
             if (e instanceof CustomException) throw e
             throw new CustomException('Failed to fetch complaint detail! Please try again', 500)
         }

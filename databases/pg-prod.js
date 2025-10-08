@@ -1,5 +1,9 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
+
+const Logger = require("../utils/logger")
+const logger = new Logger('PostgresDB')
+
 const DB_NAME = process.env.PG_DB_NAME;
 const DB_USER = process.env.PG_DB_USER;
 const DB_PASSWORD = process.env.PG_DB_PASSWORD;
@@ -11,12 +15,13 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
 });
 
 async function connectDB() {
-    try { 
+    try {
         await sequelize.authenticate();
-        console.log('Connection has been established successfully.');
-        
-    } catch (error) { 
-        console.error('Unable to connect to the database:', error);
+        logger.info('Connection to Postgres has been established successfully.');
+
+    } catch (error) {
+        logger.error('Unable to connect to the database:', error)
+        process.exit(1);
     }
 }
 

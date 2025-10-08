@@ -1,6 +1,9 @@
 const { Role } = require('../models/index');
 const ROLES = require('../constants/roles');
 
+const Logger = require("../utils/logger")
+const logger = new Logger('RoleSeeder')
+
 async function createRoles() {
     try {
         ROLES.forEach(async (role) => {
@@ -8,12 +11,10 @@ async function createRoles() {
                 where: { name: role.name },
                 defaults: { description: role.description }
             });
-            if (created) {
-                console.log(`Role ${role.name} created`);
-            }
+            
         });
     } catch (e) {
-        console.error('Error creating roles:', e);
+        logger.error(e.message, e)
     }
 }
 

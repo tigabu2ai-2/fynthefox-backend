@@ -2,7 +2,7 @@ const CustomException = require('../exceptions/custom_exception');
 const authService = require('../services/auth_service');
 const ResponseBuilder = require('../utils/response_builder');
 const Logger = require("../utils/logger")
-const logger = new Logger('AuthService')
+const logger = new Logger('AuthController')
 class AuthController {
 
 
@@ -25,11 +25,10 @@ class AuthController {
             })
             return ResponseBuilder.ok(tokens, 'Login successful').send(res);
         } catch (e) {
-            logger.error(e.message, e)
             if (e instanceof CustomException) {
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -51,6 +50,7 @@ class AuthController {
             if (e instanceof CustomException) {
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
+            logger.error(e.message, e)
             return responseBuilder.error(null, e.message).status(500).send(res);
         }
     }
@@ -67,10 +67,10 @@ class AuthController {
             return
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
+
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -86,6 +86,7 @@ class AuthController {
             if (e instanceof CustomException) {
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
+            logger.error(e.message, e)
             return responseBuilder.error(null, e.message).status(500).send(res);
         }
     }

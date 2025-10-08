@@ -4,6 +4,8 @@ const ResponseBuilder = require("../utils/response_builder")
 const complaintService = require("../services/complaint_service")
 const dashboardService = require("../services/dashboard_service")
 
+const Logger = require("../utils/logger")
+const logger = new Logger('DashboardController')
 class DashboardController {
     async #vendor_dashboard(req, res) {
         const responseBuilder = new ResponseBuilder()
@@ -14,11 +16,9 @@ class DashboardController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -31,11 +31,9 @@ class DashboardController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }
@@ -49,11 +47,9 @@ class DashboardController {
 
         } catch (e) {
             if (e instanceof CustomException) {
-                console.log(e)
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
-            console.log(e)
-
+            logger.error(e.message, e)
             return responseBuilder.error().status(500).send(res);
         }
     }

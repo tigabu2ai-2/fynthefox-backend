@@ -34,7 +34,6 @@ class UserValidator {
         })
         const { error } = schema.validate(req.body);
         if (error) {
-            console.log(error)
             return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
         }
         next();

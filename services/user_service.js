@@ -64,6 +64,7 @@ class UserService {
             phone_number: data.phone_number,
             password_hash: data.password_hash,
             role_id: (await Role.findOne({ where: { name: "admin" } })).id,
+            status:'active',
             created_by: created_by
         })
 
@@ -218,7 +219,6 @@ class UserService {
             }
             return { owners, pagination };
         } catch (e) {
-            console.log(e)
             throw new CustomException('Failed to fetch property owners', 500)
         }
     }
@@ -316,7 +316,6 @@ class UserService {
         const owner = await User.findByPk(created_by, {
             attributes: ['id', 'company_info_id'],
         })
-        console.log(data)
         const manager = await User.create({
             first_name: data.first_name,
             last_name: data.last_name,
@@ -793,7 +792,6 @@ class UserService {
             }
             return { vendors, pagination };
         } catch (e) {
-            console.log(e)
             throw new CustomException('Failed to fetch property vendors', 500)
         }
     }
@@ -854,7 +852,7 @@ class UserService {
             vendor.VendorInfo.preferred_contact_method = data.preferred_contact_method ?? vendor.VendorInfo.preferred_contact_method
 
         await vendor.VendorInfo.save()
-        const vendor_updated = await vendor.save({ logging: console.log })
+        const vendor_updated = await vendor.save()
         return vendor_updated
 
     }
