@@ -20,6 +20,7 @@ class DashboardService {
                     attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
                     include: {
                         model: TenantInfo,
+                        as: 'TenantInfo',
                         attributes: ['id', 'floor_number', 'apartment_number']
                     }
                 },
@@ -29,6 +30,7 @@ class DashboardService {
                     attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
                     include: {
                         model: VendorInfo,
+                        as: 'VendorInfo',
                         attributes: ['id', 'type', 'priority', 'availability']
                     }
 
@@ -73,6 +75,11 @@ class DashboardService {
 
         const sort_by = "createdAt"
         const order = "desc"
+        const owner = await User.findByPk(owner_id, {
+            attributes: ['id', 'company_info_id']
+        })
+        if (!owner) return { complaints: [], pagination: {}, stats: {} };
+
         const { rows: complaints, count } = await Complaint.findAndCountAll({
 
             order: [[sort_by, order.toUpperCase()]],
@@ -82,7 +89,7 @@ class DashboardService {
                 {
                     model: Property,
                     where: {
-                        owner_id: owner_id,
+                        company_info_id: owner.company_info_id
                     },
                     include: {
                         model: Address,
@@ -95,6 +102,7 @@ class DashboardService {
                     attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
                     include: {
                         model: TenantInfo,
+                        as: 'TenantInfo',
                         attributes: ['id', 'floor_number', 'apartment_number']
                     }
                 },
@@ -104,6 +112,7 @@ class DashboardService {
                     attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
                     include: {
                         model: VendorInfo,
+                        as: 'VendorInfo',
                         attributes: ['id', 'type', 'priority', 'availability']
                     }
 
@@ -129,7 +138,8 @@ class DashboardService {
             include: {
                 model: Property,
                 where: {
-                    owner_id: owner_id,
+                    company_info_id: owner.company_info_id
+
                 },
             },
         })
@@ -145,7 +155,8 @@ class DashboardService {
             include: {
                 model: Property,
                 where: {
-                    owner_id: owner_id,
+                    company_info_id: owner.company_info_id
+
                 },
             },
         })
@@ -161,7 +172,8 @@ class DashboardService {
             include: {
                 model: Property,
                 where: {
-                    owner_id: owner_id,
+                    company_info_id: owner.company_info_id
+
                 },
             },
         })
@@ -177,7 +189,7 @@ class DashboardService {
             include: {
                 model: Property,
                 where: {
-                    owner_id: owner_id,
+                    company_info_id: owner.company_info_id
                 },
             },
         })
@@ -221,6 +233,7 @@ class DashboardService {
                     attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
                     include: {
                         model: TenantInfo,
+                        as: 'TenantInfo',
                         attributes: ['id', 'floor_number', 'apartment_number']
                     }
                 },
@@ -230,6 +243,7 @@ class DashboardService {
                     attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
                     include: {
                         model: VendorInfo,
+                        as: 'VendorInfo',
                         attributes: ['id', 'type', 'priority', 'availability']
                     }
 

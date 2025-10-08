@@ -289,7 +289,6 @@ class UserService {
         const agent = await Agent.findByPk(agent_id, {
             where: { company_info_id: manager.company_info_id }
         })
-
         return agent ? true : false;
     }
 
