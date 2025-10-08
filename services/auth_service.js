@@ -49,10 +49,21 @@ class AuthService {
                 attributes: ['id', 'name']
             }
         });
+
         if (!user || !(await user.validPassword(password))) {
             throw new CustomException('Invalid email or password');
         }
-        console.log(user)
+
+        switch (user?.status) {
+            case 'pending':
+                throw new CustomException('Account is pending approval, please retry later!', 403);
+            case 'banned':
+                throw new CustomException('Account is banned, please contact support.', 403);
+            case 'locked':
+                throw new CustomException('Account is locked, please contact support.', 403);
+            case 'suspended':
+                throw new CustomException('Account is suspended, please contact support.', 403);
+        }
         const accessToken = await this.generateAccessToken(user);
         const refreshToken = await this.generateRefreshToken(user);
 
