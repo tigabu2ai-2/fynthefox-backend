@@ -7,11 +7,11 @@ require("dotenv").config()
 class Logger {
     constructor(serviceName = "FynTheFox") {
         const logFormat = winston.format.printf(
-            ({ timestamp, level, message, stack }) => `${timestamp} [${level.toUpperCase}] [${serviceName}] : ${message}\n${stack}`
+            ({ timestamp, level, message, stack }) => `${timestamp} [${level}] [${serviceName}] : ${message}\n${stack?stack:''}`
         );
 
         this.logger = winston.createLogger({
-            level: process.env.LOG_LEVEL || "inof",
+            level: process.env.LOG_LEVEL || "info",
             format: winston.format.combine(
                 winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
                 winston.format.errors({ stack: true }),
