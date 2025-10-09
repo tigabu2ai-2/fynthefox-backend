@@ -39,27 +39,6 @@ class ComplaintController {
         }
 
     }
-    async assign_vendor_by_agent(req, res) {
-        const responseBuilder = new ResponseBuilder();
-        try {
-            const vendor_id = req.body.vendor_id
-            const complaint_id = req.body.complaint_id
-            const log_writer_role = 'agent'
-            const log_writer_id = req.agent.id
-            const eta = req.body.eta
-
-            const data = { vendor_id, complaint_id, log_writer_role, log_writer_id, eta }
-            // TODO: Validate if the agent can modify this Compliant
-            await new ComplaintController().assign_vendor(data, res)
-        } catch (e) {
-            if (e instanceof CustomException) {
-                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
-            }
-            logger.error(e.message, e)
-            return responseBuilder.error().status(500).send(res);
-        }
-
-    }
 
     async assing_vendor_by_owner(req, res) {
         const responseBuilder = new ResponseBuilder();
@@ -221,6 +200,67 @@ class ComplaintController {
             return responseBuilder.error().status(500).send(res);
         }
     }
+
+
+    // Agent Specific actions ------- START -------
+    async assign_vendor_by_agent(req, res) {
+        const responseBuilder = new ResponseBuilder();
+        try {
+            const vendor_id = req.body.vendor_id
+            const complaint_id = req.body.complaint_id
+            const log_writer_role = 'agent'
+            const log_writer_id = req.agent.id
+            const eta = req.body.eta
+
+            const data = { vendor_id, complaint_id, log_writer_role, log_writer_id, eta }
+
+            if (!(await agentService.is_agent_of(req.agent.id, vendor_id, 'vendor'))) {
+                return ResponseBuilder.forbidden('You do not have access to this resource').send(res)
+            }
+            if (!(await agentService.has_access_to_complaint(req.agent.id, complaint_id))) {
+                return ResponseBuilder.forbidden('You do not have access to this resource').send(res)
+            }
+            await new ComplaintController().assign_vendor(data, res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
+        }
+
+    }
+    async fetch_all_complaints_by_agent(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            const { complaints, pagination } = await complaintService.agentViewAllComplaints(req.agent.id, req.query)
+            return responseBuilder.success({ complaints, pagination }).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async update_status_by_agent(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            if (!(await agentService.has_access_to_complaint(req.agent.id, req.params.id))) {
+                return ResponseBuilder.forbidden('You do not have access to this resource').send(res)
+            }
+            const complaint = await complaintService.agentUpdateComplaintStatus(req.params.id, req.agent.id, req.body.status, req.body.description)
+            return ResponseBuilder.ok({ complaint: complaint },).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+    // Agent Specific actions ------- END -------
 
 }
 

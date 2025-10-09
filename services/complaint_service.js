@@ -1,6 +1,7 @@
-const { Complaint, ComplaintLog, User, Role, Property, TenantInfo, Address, VendorInfo } = require('../models/index')
+const { Complaint, ComplaintLog, User, Role, Property, TenantInfo, Address, VendorInfo, Agent } = require('../models/index')
 const CustomException = require('../exceptions/custom_exception');
-const sequelize = require('../databases/pg')
+const sequelize = require('../databases/pg');
+const { where } = require('sequelize');
 
 
 class ComplaintService {
@@ -92,7 +93,7 @@ class ComplaintService {
     async setScheduleDate(complaint_id, date, log_writer_role, log_writer_id) {
         try {
             const transaction = await sequelize.transaction()
-           
+
             const complaint = await Complaint.findOne({
                 where: {
                     id: complaint_id,
@@ -295,6 +296,7 @@ class ComplaintService {
 
     }
 
+
     async ownerViewAllComplaints(owner_id, query) {
 
         try {
@@ -361,6 +363,7 @@ class ComplaintService {
         }
 
     }
+
 
     async fetchComplaintDetailInfo(complaint_id) {
         try {
@@ -518,6 +521,147 @@ class ComplaintService {
         await transaction.commit()
         return complaint
     }
+
+    // Agnet Specifi Actions ------- START -------
+    async agentViewAllComplaints(agent_id, query) {
+        const agent = await Agent.findByPk(agent_id)
+        let { page = 1, limit = 100, status, sort_by = "createdAt", order = "desc" } = query
+
+        page = parseInt(page)
+        limit = parseInt(limit)
+        const offset = (page - 1) * limit
+        const where = {}
+        if (status) where.status = status
+
+        const { rows: complaints, count } = await Complaint.findAndCountAll({
+            where: where,
+            order: [[sort_by, order.toUpperCase()]],
+            limit: limit,
+            offset: offset,
+            include: [
+                {
+                    model: Property,
+                    where: {
+                        company_info_id: agent.company_info_id
+                    },
+                    include: {
+                        model: Address,
+                    },
+                    attributes: ['id', 'name', 'address_id'],
+                },
+                {
+                    model: User,
+                    as: 'Complainant',
+                    attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
+                    include: {
+                        model: TenantInfo,
+                        as: 'TenantInfo',
+                        attributes: ['id', 'floor_number', 'apartment_number']
+                    }
+                },
+                {
+                    model: User,
+                    as: "Vendor",
+                    attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
+                    include: {
+                        model: VendorInfo,
+                        as: 'VendorInfo',
+                        attributes: ['id', 'type', 'priority', 'availability']
+                    }
+
+                }
+            ]
+
+        });
+        const pagination = {
+            total: count,
+            page,
+            pages: Math.ceil(count / limit),
+            limit
+        }
+        return { complaints, pagination };
+
+    }
+
+    async agentUpdateComplaintStatus(complaint_id, agent_id, status, description) {
+        const agent = await Agent.findByPk(agent_id)
+
+        const complaint = await Complaint.findByPk(complaint_id, {
+            include: [
+                {
+                    model: Property,
+                    required: true,
+                    where: {
+                        company_info_id: agent.company_info_id
+                    },
+                    include: {
+                        model: Address,
+                    },
+                    attributes: ['id', 'name', 'address_id'],
+                },
+                {
+                    model: User,
+                    as: 'Complainant',
+                    attributes: ['id', 'first_name', 'last_name', 'email', 'tenant_info_id'],
+                    include: {
+                        model: TenantInfo,
+                        as: 'TenantInfo',
+                        attributes: ['id', 'floor_number', 'apartment_number']
+                    }
+                },
+                {
+                    model: User,
+                    as: "Vendor",
+                    attributes: ['id', 'first_name', 'last_name', 'email', 'vendor_info_id'],
+                    include: {
+                        model: VendorInfo,
+                        as: 'VendorInfo',
+                        attributes: ['id', 'type', 'priority', 'availability']
+                    }
+
+                }
+            ]
+        })
+
+        if (!complaint || complaint == null) {
+            throw new CustomException("Can not find complaint/work-order!")
+        }
+
+        const transaction = await sequelize.transaction()
+
+        const previous_status = complaint.status
+        const current_status = status
+
+        //Updating complaint data
+        complaint.status = status
+        await complaint.save({ transaction: transaction })
+
+        //Logging the activity 
+        const complaint_log = await ComplaintLog.create(
+            {
+                complaint_id: complaint.id,
+                log_type: 'status-changed',
+                detail: {
+                    complain: complaint.complain,
+                    description: description
+                },
+                previous_status: previous_status,
+                current_status: current_status,
+                log_writer_role: 'agent',
+                log_writer_id: agent_id,
+
+            },
+            {
+                transaction
+            }
+        )
+
+        await transaction.commit()
+
+        return complaint
+
+    }
+    // Agnet Specifi Actions ------- END -------
 
 }
 

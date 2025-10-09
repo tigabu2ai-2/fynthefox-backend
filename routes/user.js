@@ -4,6 +4,7 @@ const UserValidator = require('../validators/user_validator');
 const UUIDValidator = require("../validators/uuid_validator")
 const authorizeRole = require('../middlewares/authorize_role');
 const authenticateAccessToken = require('../middlewares/authenticate_access_token');
+const authenticateAgentAPIKey = require('../middlewares/authenticate_agent_api_key')
 const { route } = require('./dashboard');
 
 const router = express.Router();
@@ -26,7 +27,7 @@ router.post('/register/property-owners', authenticateAccessToken, authorizeRole(
 
 router.get('/fetch/property-owners', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserValidator.validateGetAll, UserController.fetch_all_property_owner)
 
-router.get('/fetch/property-owners/:id',authenticateAccessToken, authorizeRole(['super-admin', 'admin']),  UserController.fetch_property_owner)
+router.get('/fetch/property-owners/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UserController.fetch_property_owner)
 
 router.delete('/delete/property-owners/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin']), UUIDValidator.paramIDValidator, UserController.delete_property_owner)
 
@@ -63,17 +64,23 @@ router.delete('/delete/property-managers/:id', authenticateAccessToken, authoriz
 
 // Vendor Specific controllers ----- START -----
 
-router.post('/register/vendors', authenticateAccessToken, authorizeRole(['property-owner','property-manager']), UserValidator.validateVendorRegistration, UserController.register_vendor);
+router.post('/register/vendors', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), UserValidator.validateVendorRegistration, UserController.register_vendor);
 
-router.get('/fetch/vendors', authenticateAccessToken, authorizeRole(['property-owner','property-manager']), UserValidator.validateGetAll, UserController.fetch_all_vendors)
+router.get('/fetch/vendors', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), UserValidator.validateGetAll, UserController.fetch_all_vendors)
 
-router.get('/fetch/vendors/:id', authenticateAccessToken, authorizeRole(['property-owner','property-manager']), UUIDValidator.paramIDValidator, UserController.fetch_vendor)
+router.get('/fetch/vendors/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), UUIDValidator.paramIDValidator, UserController.fetch_vendor)
 
-router.delete('/delete/vendors/:id', authenticateAccessToken, authorizeRole(['property-owner','property-manager']), UUIDValidator.paramIDValidator, UserController.delete_vendor)
+router.delete('/delete/vendors/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), UUIDValidator.paramIDValidator, UserController.delete_vendor)
 
-router.put('/update/vendors/:id', authenticateAccessToken, authorizeRole(['property-owner','property-manager']), UUIDValidator.paramIDValidator, UserValidator.validateVendorUpdate, UserController.update_vendor)
+router.put('/update/vendors/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), UUIDValidator.paramIDValidator, UserValidator.validateVendorUpdate, UserController.update_vendor)
 
 // Vendor Specific controllers ----- END -----
 
+// Vendor Specific controllers ----- START -----
+router.get('/agent/fetch/vendors', authenticateAgentAPIKey, UserValidator.validateGetAll, UserController.fetch_all_vendors_by_agent)
+
+router.get('/agent/fetch/property-users', authenticateAgentAPIKey, UserValidator.validateGetAll, UserController.fetch_all_property_users_by_agent)
+
+// Vendor Specific controllers ----- END -----
 
 module.exports = router;

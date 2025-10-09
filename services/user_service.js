@@ -64,7 +64,7 @@ class UserService {
             phone_number: data.phone_number,
             password_hash: data.password_hash,
             role_id: (await Role.findOne({ where: { name: "admin" } })).id,
-            status:'active',
+            status: 'active',
             created_by: created_by
         })
 
@@ -922,6 +922,107 @@ class UserService {
         return vendor ? true : false;
     }
     // Vendor Specific methods ----- END ----- 
+
+    // Agent Specific actions ----- START -----
+    async agent_fetch_all_vendors(agent_id, query) {
+        let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+        page = parseInt(page)
+        limit = parseInt(limit)
+        const offset = (page - 1) * limit
+        const where = {}
+        if (status) where.status = status
+
+        const agent = await Agent.findByPk(agent_id)
+
+        const { rows: vendors, count } = await User.findAndCountAll({
+            where: where,
+            order: [[sort_by, order.toUpperCase()]],
+            limit: limit,
+            offset: offset,
+            include: [
+                {
+                    model: Role,
+                    required: true,
+                    where: {
+                        name: 'vendor',
+                    },
+                    attributes: []
+
+                },
+                {
+                    as: "VendorInfo",
+                    model: VendorInfo,
+                    attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method'],
+                    where: { company_info_id: agent.company_info_id },
+                    required: true
+                }
+            ],
+            attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"], "email"]
+        })
+        const pagination = {
+            total: count,
+            page,
+            pages: Math.ceil(count / limit),
+            limit
+        }
+        return { vendors, pagination };
+
+    }
+
+    async agent_fetch_all_property_users(agent_id, query) {
+        let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
+        page = parseInt(page)
+        limit = parseInt(limit)
+        const offset = (page - 1) * limit
+        const where = {}
+        if (status) where.status = status
+
+        const agent = await Agent.findByPk(agent_id)
+
+        const { rows: users, count } = await User.findAndCountAll({
+            where: where,
+            order: [[sort_by, order.toUpperCase()]],
+            limit: limit,
+            offset: offset,
+            include: [
+                {
+                    required: true,
+                    model: Role,
+                    where: {
+                        name: 'property-user',
+                    },
+                    attributes: []
+
+                },
+                {
+                    model: TenantInfo,
+                    as: "TenantInfo",
+                    attributes: ["id", "floor_number", "apartment_number"],
+                    required: true,
+                    include: {
+                        model: Property,
+                        required: true,
+                        where: { company_info_id: agent.company_info_id },
+                        attributes: ['id', 'name']
+
+                    }
+                }
+            ],
+            attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email']
+        })
+
+        const pagination = {
+            total: count,
+            page,
+            pages: Math.ceil(count / limit),
+            limit
+        }
+        return { users, pagination };
+
+
+    }
+    // Agent Specific actions ----- END ----- 
+
 
 }
 module.exports = new UserService();

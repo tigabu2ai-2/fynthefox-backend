@@ -1,5 +1,5 @@
 const CustomException = require('../exceptions/custom_exception');
-const { Agent, ChannelPreference, Property, User, TenantInfo } = require('../models/index')
+const { Agent, ChannelPreference, Property, User, TenantInfo, VendorInfo, Complaint } = require('../models/index')
 const crypto = require('crypto')
 const bcrypt = require('bcrypt')
 
@@ -109,6 +109,45 @@ class AgentService {
             }
             throw new CustomException('Failed to generate API Key! Please try again', 500)
         }
+    }
+
+    async is_agent_of(agent_id, user_id, user_role) {
+        const agent = await Agent.findByPk(agent_id)
+
+        switch (user_role) {
+            case 'vendor':
+                const vendor = await User.findByPk(user_id, {
+                    include: {
+                        model: VendorInfo,
+                        as: "VendorInfo",
+                        required: true,
+                        where: {
+                            company_info_id: agent.company_info_id
+                        }
+                    }
+                })
+                if (vendor) {
+                    return true;
+                }
+        }
+
+        return false
+    }
+    async has_access_to_complaint(agent_id, complaint_id) {
+        const agent = await Agent.findByPk(agent_id)
+
+        const complaint = await Complaint.findByPk(complaint_id, {
+            include: {
+                model: Property,
+                required: true,
+                where: {
+                    company_info_id: agent.company_info_id
+                }
+            }
+        })
+
+        return complaint ? true : false
+
     }
 }
 

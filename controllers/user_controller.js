@@ -196,7 +196,7 @@ class UserController {
         try {
             const message = await userService.delete_property_manager(req.params.id, req.user.id)
             return responseBuilder.success(null, message).send(res)
-         } catch (e) {
+        } catch (e) {
             if (e instanceof CustomException) {
                 return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
             }
@@ -388,6 +388,39 @@ class UserController {
     }
 
     // Vendor Specific controllers ----- END -----
+
+    // Agent Specific actions ------- START -------
+    async fetch_all_vendors_by_agent(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            const { vendors, pagination } = await userService.agent_fetch_all_vendors(req.agent.id, req.query)
+            return responseBuilder.success({ vendors, pagination }).send(res)
+
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+     async fetch_all_property_users_by_agent(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            const { users, pagination } = await userService.agent_fetch_all_property_users(req.agent.id, req.query)
+            return responseBuilder.success({ users, pagination }).send(res)
+
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+    // Agent Specific actions ------- END -------
+
 
 }
 
