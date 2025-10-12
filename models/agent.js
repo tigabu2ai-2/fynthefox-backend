@@ -20,6 +20,14 @@ Agent.init({
     api_key: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    n8n_complaint_webhook_url: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    n8n_user_webhook_url: {
+        type: DataTypes.STRING,
+        allowNull: false
     }
 }, {
     sequelize,
