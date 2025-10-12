@@ -2,8 +2,10 @@ const { User, Role, Property, Agent, VendorInfo, Address, TenantInfo, Subscripti
 const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg');
 const RedisAuthHelper = require('../helpers/redis_auth_helper');
-const { Op } = require('sequelize');
-const { required } = require('joi');
+const webhookTrigger = require('../utils/webhook_trigger')
+
+const Logger = require('../utils/logger')
+const logger = new Logger('UserService')
 
 class UserService {
     async register(data, role_name, created_by) {
@@ -38,21 +40,6 @@ class UserService {
             default:
                 throw new CustomException('Invalid role', 400)
         }
-        // data.role_id = role_id.id;
-        // const user = await User.create(data, { transaction });
-
-        // await transaction.commit()
-
-        // return {
-        //     id: user.id,
-        //     first_name: user.first_name,
-        //     last_name: user.last_name,
-        //     email: user.email,
-        //     phone_number: user.phone_number,
-        //     role: role_name,
-        //     status: user.status,
-        //     is_2fa_enabled: user.is_2fa_enabled
-        // };
     }
 
     // Admin Specific methods ----- START -----
@@ -463,6 +450,24 @@ class UserService {
         }, {
             include: [{ model: User, as: "Tenant" }]
         })
+
+        const property = await Property.findByPk(data.property_id, {
+            attributes: ['company_info_id']
+        })
+
+        //Tirggering the N8N Webhook
+        this.user_created_or_modified(
+            {
+                id: tenant_info.Tenant.id,
+                first_name: tenant_info.Tenant.first_name,
+                last_name: tenant_info.Tenant.last_name,
+                email: tenant_info.Tenant.email,
+                phone_number: tenant_info.Tenant.phone_number,
+                role: "property-user",
+                status: tenant_info.Tenant.status,
+            },
+            property.company_info_id
+        )
         return {
             id: tenant_info.Tenant.id,
             first_name: tenant_info.Tenant.first_name,
@@ -665,6 +670,24 @@ class UserService {
         await user.TenantInfo.save()
         const updated_user = await user.save()
 
+
+        //Tirggering the N8N Webhook
+        const property = await Property.findByPk( user.TenantInfo.property_id, {
+            attributes: ['company_info_id']
+        })
+
+        this.user_created_or_modified(
+            {
+                id: updated_user.id,
+                first_name: updated_user.first_name,
+                last_name: updated_user.last_name,
+                email: updated_user.email,
+                phone_number: updated_user.phone_number,
+                role: "property-user",
+                status: updated_user.status
+            },
+            property.company_info_id
+        )
         return {
             id: updated_user.id,
             first_name: updated_user.first_name,
@@ -710,6 +733,7 @@ class UserService {
         if (!manager.company_info_id) throw new CustomException("You are not authorized to create vendor! Contact admin.", 403)
         const role_id = await Role.findOne({ where: { name: "vendor" } })
 
+
         const vendor_info = await VendorInfo.create({
             type: data.type,
             priority: data.priority,
@@ -733,6 +757,22 @@ class UserService {
                 as: "Vendor"
             }]
         })
+
+        //Tirggering the N8N Webhook
+        this.vendor_created_or_modified(
+            {
+                id: vendor_info.Vendor.id,
+                first_name: vendor_info.Vendor.first_name,
+                last_name: vendor_info.Vendor.last_name,
+                email: vendor_info.Vendor.email,
+                phone_number: vendor_info.Vendor.phone_number,
+                status: vendor_info.Vendor.status,
+                role: "vendor",
+
+            },
+            manager.company_info_id
+        )
+
 
         return {
             id: vendor_info.Vendor.id,
@@ -828,7 +868,7 @@ class UserService {
         })
 
         const vendor = await User.findByPk(user_id, {
-            attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id'],
+            attributes: ['first_name', 'last_name', 'email', 'phone_number', 'id', 'status'],
             include: {
                 model: VendorInfo,
                 as: "VendorInfo",
@@ -844,6 +884,7 @@ class UserService {
         vendor.last_name = data.last_name ?? vendor.last_name
         vendor.email = data.email ?? vendor.email
         vendor.phone_number = data.phone_number ?? vendor.phone_number
+        vendor.status = data.status ?? vendor.status
 
         vendor.VendorInfo.type = data.type ?? vendor.VendorInfo.type
         vendor.VendorInfo.priority = data.priority ?? vendor.VendorInfo.priority
@@ -853,6 +894,20 @@ class UserService {
 
         await vendor.VendorInfo.save()
         const vendor_updated = await vendor.save()
+        //Tirggering the N8N Webhook
+        this.vendor_created_or_modified(
+            {
+                id: vendor_updated.id,
+                first_name: vendor_updated.first_name,
+                last_name: vendor_updated.last_name,
+                email: vendor_updated.email,
+                phone_number: vendor_updated.phone_number,
+                status: vendor_updated.status,
+                role: "vendor",
+
+            },
+            manager.company_info_id
+        )
         return vendor_updated
 
     }
@@ -1024,5 +1079,32 @@ class UserService {
     // Agent Specific actions ----- END ----- 
 
 
+    //Webhook Trigger
+    async user_created_or_modified(user, company_info_id) {
+        try {
+            const agent = await Agent.findOne({
+                where: {
+                    company_info_id: company_info_id
+                }
+            })
+            webhookTrigger.property_user_created(user, agent)
+
+        } catch (e) {
+            logger.error(e.message, e)
+        }
+    }
+    async vendor_created_or_modified(user, company_info_id) {
+        try {
+            const agent = await Agent.findOne({
+                where: {
+                    company_info_id: company_info_id
+                }
+            })
+            webhookTrigger.vendor_created(user, agent)
+
+        } catch (e) {
+            logger.error(e.message, e)
+        }
+    }
 }
 module.exports = new UserService();

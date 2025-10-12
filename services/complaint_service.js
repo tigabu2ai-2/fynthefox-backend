@@ -1,8 +1,10 @@
 const { Complaint, ComplaintLog, User, Role, Property, TenantInfo, Address, VendorInfo, Agent } = require('../models/index')
 const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg');
-const { where } = require('sequelize');
+const webhookTrigger = require('../utils/webhook_trigger')
 
+const Logger = require('../utils/logger')
+const logger = new Logger('ComplaintService')
 
 class ComplaintService {
     async createComplaint(data, agent_id, log_writer_role, log_writer_id) {
@@ -25,6 +27,8 @@ class ComplaintService {
             }
         )
         if (complaint) {
+            const agent = await Agent.findByPk(agent_id)
+            this.complaint_created(complaint, agent)
             return complaint;
         } else {
             throw new CustomException('Failed to create complaint! Please try again', 500);
@@ -663,6 +667,15 @@ class ComplaintService {
     }
     // Agnet Specifi Actions ------- END -------
 
+    //Triggering Webhook
+    async complaint_created(complaint, agent) {
+        try {
+            webhookTrigger.complaint_created(complaint, agent)
+        }
+        catch (e) {
+            logger.error(e.message, e)
+        }
+    }
 }
 
 module.exports = new ComplaintService();
