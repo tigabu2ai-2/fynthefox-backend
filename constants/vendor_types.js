@@ -3,7 +3,7 @@ const Types = [
     "plumber",
     "hvac-technician",
     "water-supply-specialist",
-    "sewage_specialit",
+    "sewage_specialist",
     "mason",
     "pest-control-service",
     "cleaning-service",
