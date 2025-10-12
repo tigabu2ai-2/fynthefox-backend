@@ -25,6 +25,8 @@ class AgentService {
                 status: 'active',
                 language: data.language,
                 api_key: agent_api_key,
+                n8n_complaint_webhook_url:data.n8n_complaint_webhook_url,
+                n8n_user_webhook_url:data.n8n_user_webhook_url,
                 ChannelPreference: {
                     ...channel_preferences
                 }

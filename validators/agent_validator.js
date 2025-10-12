@@ -6,6 +6,9 @@ class AgentValidator {
         const schema = Joi.object({
             language: Joi.string().valid(...Object.values(['en', 'es', 'fr'])).required(),
             channel_preference: Joi.string().valid(...Object.values(['voice', 'whatsapp', 'email', 'web_form'])).required(),
+            n8n_complaint_webhook_url: Joi.string().required(),
+            n8n_user_webhook_url: Joi.string().required()
+
             
         })
 
