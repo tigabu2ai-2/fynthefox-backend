@@ -672,7 +672,7 @@ class UserService {
 
 
         //Tirggering the N8N Webhook
-        const property = await Property.findByPk( user.TenantInfo.property_id, {
+        const property = await Property.findByPk(user.TenantInfo.property_id, {
             attributes: ['company_info_id']
         })
 
@@ -768,6 +768,7 @@ class UserService {
                 phone_number: vendor_info.Vendor.phone_number,
                 status: vendor_info.Vendor.status,
                 role: "vendor",
+                type: data.type
 
             },
             manager.company_info_id
@@ -904,6 +905,7 @@ class UserService {
                 phone_number: vendor_updated.phone_number,
                 status: vendor_updated.status,
                 role: "vendor",
+                type: vendor.VendorInfo.type
 
             },
             manager.company_info_id
