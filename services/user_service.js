@@ -275,7 +275,6 @@ class UserService {
         const manager = await User.findByPk(user_id, {
             attributes: ["id", "company_info_id"]
         })
-
         const agent = await Agent.findByPk(agent_id, {
             where: { company_info_id: manager.company_info_id }
         })
@@ -982,20 +981,9 @@ class UserService {
 
     // Agent Specific actions ----- START -----
     async agent_fetch_all_vendors(agent_id, query) {
-        let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
-        page = parseInt(page)
-        limit = parseInt(limit)
-        const offset = (page - 1) * limit
-        const where = {}
-        if (status) where.status = status
-
         const agent = await Agent.findByPk(agent_id)
 
-        const { rows: vendors, count } = await User.findAndCountAll({
-            where: where,
-            order: [[sort_by, order.toUpperCase()]],
-            limit: limit,
-            offset: offset,
+        const vendors = await User.findAll({
             include: [
                 {
                     model: Role,
@@ -1016,31 +1004,27 @@ class UserService {
             ],
             attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"], "email"]
         })
-        const pagination = {
-            total: count,
-            page,
-            pages: Math.ceil(count / limit),
-            limit
-        }
-        return { vendors, pagination };
+
+        const sanitized_vendors = vendors.map((vendor) => {
+            return {
+                id: vendor.id,
+                first_name: vendor.first_name,
+                last_name: vendor.last_name,
+                email: vendor.email,
+                phone_number: vendor.phone_number,
+                status: vendor.status,
+                role: "vendor",
+                type: vendor.VendorInfo.type
+            }
+        })
+        return sanitized_vendors;
 
     }
 
     async agent_fetch_all_property_users(agent_id, query) {
-        let { page = 1, limit = 10, status, sort_by = "createdAt", order = "desc" } = query
-        page = parseInt(page)
-        limit = parseInt(limit)
-        const offset = (page - 1) * limit
-        const where = {}
-        if (status) where.status = status
-
         const agent = await Agent.findByPk(agent_id)
 
-        const { rows: users, count } = await User.findAndCountAll({
-            where: where,
-            order: [[sort_by, order.toUpperCase()]],
-            limit: limit,
-            offset: offset,
+        const users = await User.findAll({
             include: [
                 {
                     required: true,
@@ -1068,13 +1052,18 @@ class UserService {
             attributes: ['id', 'first_name', 'last_name', 'status', 'createdAt', 'email']
         })
 
-        const pagination = {
-            total: count,
-            page,
-            pages: Math.ceil(count / limit),
-            limit
-        }
-        return { users, pagination };
+        const sanitized_users = users.map((user) => {
+            return {
+                id: user.id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                phone_number: user.phone_number,
+                role: "property-user",
+                status: user.status,
+            }
+        })
+        return sanitized_users
 
 
     }

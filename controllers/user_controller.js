@@ -393,8 +393,8 @@ class UserController {
     async fetch_all_vendors_by_agent(req, res) {
         const responseBuilder = new ResponseBuilder()
         try {
-            const { vendors, pagination } = await userService.agent_fetch_all_vendors(req.agent.id, req.query)
-            return responseBuilder.success({ vendors, pagination }).send(res)
+            const vendors = await userService.agent_fetch_all_vendors(req.agent.id, req.query)
+            return responseBuilder.success({ vendors, }).send(res)
 
         } catch (e) {
             if (e instanceof CustomException) {
@@ -405,11 +405,11 @@ class UserController {
         }
     }
 
-     async fetch_all_property_users_by_agent(req, res) {
+    async fetch_all_property_users_by_agent(req, res) {
         const responseBuilder = new ResponseBuilder()
         try {
-            const { users, pagination } = await userService.agent_fetch_all_property_users(req.agent.id, req.query)
-            return responseBuilder.success({ users, pagination }).send(res)
+            const users = await userService.agent_fetch_all_property_users(req.agent.id, req.query)
+            return responseBuilder.success({ users }).send(res)
 
         } catch (e) {
             if (e instanceof CustomException) {
