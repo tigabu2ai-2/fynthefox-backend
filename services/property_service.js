@@ -1,5 +1,10 @@
 const CustomException = require('../exceptions/custom_exception');
-const { Property, User, Address, VendorInfo, VendorProperty } = require('../models/index');
+const { Property, User, Address, VendorInfo, VendorProperty, Agent } = require('../models/index');
+const webhookTrigger = require('../utils/webhook_trigger')
+
+const Logger = require("../utils/logger")
+const logger = new Logger('PropertyService')
+
 class PropertyService {
     async createProperty(data, created_by) {
         // const address = await addressService.createAddress(addressData);
@@ -109,6 +114,8 @@ class PropertyService {
 
         if (!vendor_property) throw new CustomException("Failed to assign vendor! Please try again.");
 
+        this.vendor_modified(vendor_id, requester.company_info_id)
+
         return "Vendor assigned successfully"
 
 
@@ -153,10 +160,59 @@ class PropertyService {
 
         await vendor_property.destroy()
 
+        this.vendor_modified(vendor_id, requester.company_info_id)
 
         return "Vendor retracted successfully"
 
 
+    }
+
+    //Webhook Trigger
+    async vendor_modified(vendor_id, company_info_id) {
+        try {
+            const vendor = await User.findOne({
+                where: {
+                    id: vendor_id
+                },
+                include: [
+                    {
+                        as: "VendorInfo",
+                        model: VendorInfo,
+                        attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method'],
+                        where: { company_info_id: company_info_id },
+                        required: true,
+                        include: {
+                            model: Property,
+                            as: 'Properties',
+                            attributes: ['id']
+                        }
+                    },
+
+                ],
+                attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"], "email", "phone_number"]
+            })
+            const sanitized_vendor = {
+                id: vendor.id,
+                first_name: vendor.first_name,
+                last_name: vendor.last_name,
+                email: vendor.email,
+                phone_number: vendor.phone_number,
+                status: vendor.status,
+                role: "vendor",
+                type: vendor.VendorInfo.type,
+                properties: vendor.VendorInfo.Properties.map((property) => { return property.id })
+            }
+            console.log(sanitized_vendor)
+            const agent = await Agent.findOne({
+                where: {
+                    company_info_id: company_info_id
+                }
+            })
+            webhookTrigger.vendor_created(sanitized_vendor, agent)
+
+        } catch (e) {
+            logger.error(e.message, e)
+        }
     }
 }
 
