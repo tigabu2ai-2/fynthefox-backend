@@ -202,7 +202,6 @@ class PropertyService {
                 type: vendor.VendorInfo.type,
                 properties: vendor.VendorInfo.Properties.map((property) => { return property.id })
             }
-            console.log(sanitized_vendor)
             const agent = await Agent.findOne({
                 where: {
                     company_info_id: company_info_id
