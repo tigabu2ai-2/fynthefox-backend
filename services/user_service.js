@@ -1,4 +1,4 @@
-const { User, Role, Property, Agent, VendorInfo, Address, TenantInfo, Subscription, CompanyInfo } = require('../models/index');
+const { User, Role, Property, Agent, VendorInfo, Address, TenantInfo, Subscription, CompanyInfo, VendorProperty } = require('../models/index');
 const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg');
 const RedisAuthHelper = require('../helpers/redis_auth_helper');
@@ -759,17 +759,7 @@ class UserService {
 
         //Tirggering the N8N Webhook
         this.vendor_created_or_modified(
-            {
-                id: vendor_info.Vendor.id,
-                first_name: vendor_info.Vendor.first_name,
-                last_name: vendor_info.Vendor.last_name,
-                email: vendor_info.Vendor.email,
-                phone_number: vendor_info.Vendor.phone_number,
-                status: vendor_info.Vendor.status,
-                role: "vendor",
-                type: data.type
-
-            },
+            vendor_info.Vendor.id,
             manager.company_info_id
         )
 
@@ -896,17 +886,7 @@ class UserService {
         const vendor_updated = await vendor.save()
         //Tirggering the N8N Webhook
         this.vendor_created_or_modified(
-            {
-                id: vendor_updated.id,
-                first_name: vendor_updated.first_name,
-                last_name: vendor_updated.last_name,
-                email: vendor_updated.email,
-                phone_number: vendor_updated.phone_number,
-                status: vendor_updated.status,
-                role: "vendor",
-                type: vendor.VendorInfo.type
-
-            },
+            vendor.id,
             manager.company_info_id
         )
         return vendor_updated
@@ -986,23 +966,20 @@ class UserService {
         const vendors = await User.findAll({
             include: [
                 {
-                    model: Role,
-                    required: true,
-                    where: {
-                        name: 'vendor',
-                    },
-                    attributes: []
-
-                },
-                {
                     as: "VendorInfo",
                     model: VendorInfo,
                     attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method'],
                     where: { company_info_id: agent.company_info_id },
-                    required: true
-                }
+                    required: true,
+                    include: {
+                        model: Property,
+                        as: 'Properties',
+                        attributes: ['id']
+                    }
+                },
+
             ],
-            attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"], "email"]
+            attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"], "email", "phone_number"]
         })
 
         const sanitized_vendors = vendors.map((vendor) => {
@@ -1014,7 +991,8 @@ class UserService {
                 phone_number: vendor.phone_number,
                 status: vendor.status,
                 role: "vendor",
-                type: vendor.VendorInfo.type
+                type: vendor.VendorInfo.type,
+                properties: vendor.VendorInfo.Properties.map((property) => { return property.id })
             }
         })
         return sanitized_vendors;
@@ -1084,14 +1062,48 @@ class UserService {
             logger.error(e.message, e)
         }
     }
-    async vendor_created_or_modified(user, company_info_id) {
+    async vendor_created_or_modified(vendor_id, company_info_id) {
         try {
+            const vendor = await User.findOne({
+                where: {
+                    id: vendor_id
+                },
+                include: [
+                    {
+                        as: "VendorInfo",
+                        model: VendorInfo,
+                        attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method'],
+                        where: { company_info_id: company_info_id },
+                        required: true,
+                        include: {
+                            model: Property,
+                            as: 'Properties',
+                            attributes: ['id']
+                        }
+                    },
+
+                ],
+                attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"], "email", "phone_number"]
+            })
+            const sanitized_vendor = {
+                id: vendor.id,
+                first_name: vendor.first_name,
+                last_name: vendor.last_name,
+                email: vendor.email,
+                phone_number: vendor.phone_number,
+                status: vendor.status,
+                role: "vendor",
+                type: vendor.VendorInfo.type,
+                properties: vendor.VendorInfo.Properties.map((property) => { return property.id })
+            }
+            console.log(sanitized_vendor)
+            return
             const agent = await Agent.findOne({
                 where: {
                     company_info_id: company_info_id
                 }
             })
-            webhookTrigger.vendor_created(user, agent)
+            webhookTrigger.vendor_created(sanitized_vendor, agent)
 
         } catch (e) {
             logger.error(e.message, e)
