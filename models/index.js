@@ -10,6 +10,7 @@ const TenantInfo = require('./tenant_info');
 const Complaint = require('./complaint')
 const ComplaintLog = require('./complaint_log')
 const Agent = require('./agent')
+const VendorProperty = require('./vendor_property')
 
 const ChannelPreference = require('./channel_preference')
 const VendorInfo = require('./vendor_info')
@@ -81,6 +82,21 @@ User.belongsTo(VendorInfo, { as: "VendorInfo", foreignKey: 'vendor_info_id' })
 CompanyInfo.hasMany(VendorInfo, { as: "Vendors", foreignKey: 'company_info_id', onDelete: 'SET NULL' })
 VendorInfo.belongsTo(CompanyInfo, { as: "CompanyInfo", foreignKey: 'company_info_id' })
 
+//Creating association between VendorInfo and Property
+Property.belongsToMany(VendorInfo, {
+    through: VendorProperty,
+    foreignKey: 'property_id',
+    otherKey: 'vendor_info_id',
+    as: 'Vendors'
+})
+
+VendorInfo.belongsToMany(Property, {
+    through: VendorProperty,
+    foreignKey: 'vendor_info_id',
+    otherKey: 'property_id',
+    as: 'Properties'
+})
+
 // Creating association between CreatedUsers and Creator
 User.hasMany(User, { as: 'CreatedUsers', foreignKey: 'created_by', onDelete: 'SET NULL' })
 User.belongsTo(User, { as: 'Creator', foreignKey: 'created_by' })
@@ -98,5 +114,6 @@ module.exports = {
     ComplaintLog,
     Agent,
     ChannelPreference,
-    CompanyInfo
+    CompanyInfo,
+    VendorProperty
 };
