@@ -28,7 +28,7 @@ class ComplaintService {
         )
         if (complaint) {
             const agent = await Agent.findByPk(agent_id)
-            this.complaint_created(complaint, agent)
+            this.complaint_created(complaint.id, agent)
             return complaint;
         } else {
             throw new CustomException('Failed to create complaint! Please try again', 500);
@@ -668,8 +668,56 @@ class ComplaintService {
     // Agnet Specifi Actions ------- END -------
 
     //Triggering Webhook
-    async complaint_created(complaint, agent) {
+    async complaint_created(complaint_id, agent) {
         try {
+            const complaint = await Complaint.findByPk(complaint_id, {
+                include: [
+                    {
+                        model: Property,
+                        attributes: ['id', 'name'],
+                        include: {
+                            model: Address,
+                        }
+                    },
+                    {
+                        model: User,
+                        as: 'Complainant',
+                        attributes: ['id', 'first_name', 'last_name', 'email', 'phone_number'],
+                        include: {
+                            model: TenantInfo,
+                            as: 'TenantInfo'
+                        }
+                    }
+                ]
+            })
+
+            const sanitized_complaint = {
+                id: complaint.id,
+                user_id: complaint.user_id,
+                status: complaint.status,
+                complain: complaint.complain,
+                category: complaint.category,
+                urgency: complaint.urgency,
+                property_id: complaint.property_id,
+                property_address: {
+
+                    city: complaint.Property.Address.city,
+                    street: complaint.Property.Address.street,
+
+
+                },
+                tenant_info: {
+                    first_name: complaint.Complainant.first_name,
+                    last_name: complaint.Complainant.last_name,
+                    phone_number: complaint.Complainant.phone_number,
+                    email: complaint.Complainant.email,
+                    floor_number: complaint.Complainant.TenantInfo.floor_number,
+                    apartment_number: complaint.Complainant.TenantInfo.apartment_number
+
+
+
+                }
+            }
             webhookTrigger.complaint_created(complaint, agent)
         }
         catch (e) {

@@ -36,8 +36,7 @@ class WebhookTrigger {
         console.log(user)
 
         try {
-            if (!agent) throw new CustomException('Agent not found! Users are not synced to the agent.')
-
+            if (!agent) throw new CustomException('Agent not found! Users are not synced to the agent.');
             const N8N_WEBHOOK_URL = agent.n8n_user_webhook_url;
 
             await axios.post(N8N_WEBHOOK_URL, user)
