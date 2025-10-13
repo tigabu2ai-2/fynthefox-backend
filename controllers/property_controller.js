@@ -41,6 +41,36 @@ class PropertyController {
             return responseBuilder.error().status(500).send(res);
         }
     }
+
+
+    async assign_vendor(req, res) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            const message = await propertyService.assign_vendor(req.body.property_id, req.body.vendor_id, req.user.id)
+            return responseBuilder.success(null, message).send(res)
+
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
+
+    async retract_vendor(req, res,) {
+        const responseBuilder = new ResponseBuilder()
+        try {
+            const message = await propertyService.retract_vendor(req.body.property_id, req.body.vendor_id, req.user.id)
+            return responseBuilder.success(null, message).send(res)
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
+        }
+    }
 }
 
 module.exports = new PropertyController();

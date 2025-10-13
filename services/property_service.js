@@ -1,4 +1,5 @@
-const { Property, User, Address } = require('../models/index');
+const CustomException = require('../exceptions/custom_exception');
+const { Property, User, Address, VendorInfo, VendorProperty } = require('../models/index');
 class PropertyService {
     async createProperty(data, created_by) {
         // const address = await addressService.createAddress(addressData);
@@ -33,7 +34,7 @@ class PropertyService {
         const offset = (page - 1) * limit
         const requester = await User.findByPk(requester_id, { attributes: ["id", "company_info_id"] })
         if (!requester) {
-            throw new Error("You are not authorized to perform this action")
+            throw new CustomException("You are not authorized to perform this action")
         }
 
         const { rows: properties, count } = await Property.findAndCountAll({
@@ -62,6 +63,100 @@ class PropertyService {
         }
 
         return { properties, pagination }
+    }
+
+    async assign_vendor(property_id, vendor_id, requester_id) {
+        const requester = await User.findByPk(requester_id, {
+            attributes: ['company_info_id']
+        })
+
+        const property = await Property.findOne({
+            where: {
+                id: property_id,
+                company_info_id: requester.company_info_id
+            }
+        })
+
+        if (!property) throw new CustomException("Property not found!", 400);
+
+        const vendor = await User.findOne({
+            where: {
+                id: vendor_id,
+            },
+            include: {
+                model: VendorInfo,
+                as: 'VendorInfo',
+                required: true,
+                where: {
+                    company_info_id: requester.company_info_id
+                }
+            }
+        })
+
+        if (!vendor) throw new CustomException("Vendor not found!", 400);
+
+        const already_exist = await VendorProperty.findOne({
+            vendor_info_id: vendor.VendorInfo.id,
+            property_id: property.id
+        })
+
+        if (already_exist) throw new CustomException("Already assigned", 400);
+
+        const vendor_property = await VendorProperty.create({
+            vendor_info_id: vendor.VendorInfo.id,
+            property_id: property.id
+        })
+
+        if (!vendor_property) throw new CustomException("Failed to assign vendor! Please try again.");
+
+        return "Vendor assigned successfully"
+
+
+    }
+
+    async retract_vendor(property_id, vendor_id, requester_id) {
+        const requester = await User.findByPk(requester_id, {
+            attributes: ['company_info_id']
+        })
+
+        const property = await Property.findOne({
+            where: {
+                id: property_id,
+                company_info_id: requester.company_info_id
+            }
+        })
+
+        if (!property) throw new CustomException("Property not found!", 400);
+
+        const vendor = await User.findOne({
+            where: {
+                id: vendor_id,
+            },
+            include: {
+                model: VendorInfo,
+                as: 'VendorInfo',
+                required: true,
+                where: {
+                    company_info_id: requester.company_info_id
+                }
+            }
+        })
+
+        if (!vendor) throw new CustomException("Vendor not found!", 400);
+
+        const vendor_property = await VendorProperty.findOne({
+            vendor_info_id: vendor.VendorInfo.id,
+            property_id: property.id
+        })
+
+        if (!vendor_property) throw new CustomException("Vendor was not assigned to the provided property!", 400);
+
+        await vendor_property.destroy()
+
+
+        return "Vendor retracted successfully"
+
+
     }
 }
 

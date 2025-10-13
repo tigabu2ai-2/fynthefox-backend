@@ -8,6 +8,10 @@ const router = express.Router();
 
 router.post('/create', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), PropertyValidator.validateCreateProperty, PropertyController.create_property);
 
-router.get('/', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), PropertyValidator.validateGetAll, PropertyController.fetch_all),
+router.get('/', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), PropertyValidator.validateGetAll, PropertyController.fetch_all)
 
-    module.exports = router;
+router.post('/assign-vendor', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), PropertyValidator.validateAssingVendor, PropertyController.assign_vendor)
+
+router.delete('/retract-vendor', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), PropertyValidator.validateRetractVendor, PropertyController.retract_vendor)
+
+module.exports = router;

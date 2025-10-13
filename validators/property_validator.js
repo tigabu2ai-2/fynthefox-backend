@@ -35,5 +35,29 @@ class PropertyValidator {
         }
         next();
     }
+
+    static validateAssingVendor(req, res, next) {
+        const schema = Joi.object({
+            property_id: Joi.string().uuid().required(),
+            vendor_id: Joi.string().uuid().required(),
+        })
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
+        }
+        next();
+    }
+
+    static validateRetractVendor(req, res, next) {
+        const schema = Joi.object({
+            property_id: Joi.string().uuid().required(),
+            vendor_id: Joi.string().uuid().required(),
+        })
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
+        }
+        next();
+    }
 }
 module.exports = PropertyValidator;  
