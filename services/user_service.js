@@ -809,7 +809,12 @@ class UserService {
                         model: VendorInfo,
                         attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method'],
                         where: { company_info_id: manager.company_info_id },
-                        required: true
+                        required: true,
+                        include: {
+                            model: Property,
+                            as: 'Properties',
+                            attributes: ['id', 'name']
+                        }
                     }
                 ],
                 attributes: ['id', 'first_name', 'last_name', 'status', ["createdAt", "registered_on"], "email"]
@@ -905,7 +910,12 @@ class UserService {
                 as: "VendorInfo",
                 attributes: ['type', 'priority', 'status', 'availability', 'service_area', 'preferred_contact_method', 'id'],
                 where: { company_info_id: manager.company_info_id },
-                required: true
+                required: true,
+                include: {
+                    model: Property,
+                    as: 'Properties',
+                    attributes: ['id', 'name']
+                }
             }
         });
         if (!vendor) {
