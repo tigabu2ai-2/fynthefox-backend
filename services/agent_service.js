@@ -1,9 +1,12 @@
 const CustomException = require('../exceptions/custom_exception');
-const { Agent, ChannelPreference, Property, User, TenantInfo, VendorInfo, Complaint } = require('../models/index')
+const { Agent, ChannelPreference, Property, User, TenantInfo, VendorInfo, Complaint, CompanyInfo } = require('../models/index')
 const crypto = require('crypto')
 const bcrypt = require('bcrypt')
 
-const Logger = require('../utils/logger')
+const Logger = require('../utils/logger');
+const sequelize = require('../databases/pg');
+const agent_sequelize = require('../databases/agent_mysql')
+const { schema } = require('../models/company_info');
 const logger = new Logger('AgentService')
 require('dotenv').config()
 
@@ -22,6 +25,13 @@ class AgentService {
         const channels = ["voice", "email", "whatsapp", "web_form"]
 
         const channel_preferences = Object.fromEntries(channels.map(channel => [channel, channel === data.channel_preference]))
+        const company_info = await CompanyInfo.findByPk(data.company_info_id)
+        //Sanitizing schema name
+        const random_string = crypto.randomBytes(10).toString('hex');
+        const sanitized_company_name = company_info.name.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+        const schema_name = `${sanitized_company_name}_${random_string}`
+
+
         const agent = await Agent.create({
             company_info_id: data.company_info_id,
             status: 'active',
@@ -29,6 +39,7 @@ class AgentService {
             api_key: agent_api_key,
             n8n_complaint_webhook_url: data.n8n_complaint_webhook_url,
             n8n_user_webhook_url: data.n8n_user_webhook_url,
+            junk_schema_name: schema_name,
             ChannelPreference: {
                 ...channel_preferences
             }
@@ -38,6 +49,8 @@ class AgentService {
         if (!agent || agent == null) {
             throw new CustomException('Failed to create agent! Please try again.', 500)
         }
+
+
 
         agent.api_key = uuid;
         return agent
@@ -86,18 +99,18 @@ class AgentService {
     }
 
     async generate_agent_api_key(agent_id) {
-        
-            const agent = await Agent.findByPk(agent_id)
-            if (!agent || agent == null) {
-                throw new CustomException('Agent not found!', 400)
-            }
-            const uuid = crypto.randomUUID() // This will be shared to the user
-            const agent_api_key = crypto.createHmac("sha256", this.agent_api_key_hash_secret).update(uuid).digest('hex') // This will be stored in the DB
 
-            agent.api_key = agent_api_key
-            await agent.save()
-            return uuid
-      
+        const agent = await Agent.findByPk(agent_id)
+        if (!agent || agent == null) {
+            throw new CustomException('Agent not found!', 400)
+        }
+        const uuid = crypto.randomUUID() // This will be shared to the user
+        const agent_api_key = crypto.createHmac("sha256", this.agent_api_key_hash_secret).update(uuid).digest('hex') // This will be stored in the DB
+
+        agent.api_key = agent_api_key
+        await agent.save()
+        return uuid
+
     }
 
     async is_agent_of(agent_id, user_id, user_role) {

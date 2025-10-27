@@ -9,6 +9,7 @@ const UUIDValidator = require('../validators/uuid_validator');
 
 const router = express.Router()
 
+router.post('/create', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']),ComplaintValidator.validateCreateComplaintByUser, ComplaintController.create_by_user)
 
 router.put('/assign-vendor', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager',]), ComplaintValidator.validateAssignVendor, ComplaintController.assing_vendor_by_owner)
 

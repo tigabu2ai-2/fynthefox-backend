@@ -40,6 +40,38 @@ class ComplaintController {
 
     }
 
+     async create_by_user(req, res) {
+        const responseBuilder = new ResponseBuilder();
+
+        try {
+            const requester_id = req.user.id
+            const requester_role = req.user.role
+            const user_id = req.body.user_id
+            const complain = req.body.complain
+
+
+            // const property_id = await agentService.get_property_id(agent_id, req.body.user_id)
+            // // if (!userService.is_resident_of_property(user_id, property_id)) {
+            // //     return ResponseBuilder.badRequest('Invalid user!').send(res)
+
+            // // }
+
+            const complaint_data = req.body
+            // complaint_data.property_id = property_id
+
+            const complaint = await complaintService.createComplaint_by_owner(complaint_data,  requester_role, requester_id)
+            return ResponseBuilder.ok(complaint, 'Complaint created successfully').send(res);
+
+        } catch (e) {
+            if (e instanceof CustomException) {
+                return responseBuilder.error(null, e.message).status(e.statusCode).send(res);
+            }
+            logger.error(e.message, e)
+            return responseBuilder.error().status(500).send(res);
+        }
+
+    }
+
     async assing_vendor_by_owner(req, res) {
         const responseBuilder = new ResponseBuilder();
         try {

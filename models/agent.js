@@ -28,6 +28,9 @@ Agent.init({
     n8n_user_webhook_url: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    junk_schema_name: {
+        type: DataTypes.STRING
     }
 }, {
     sequelize,

@@ -3,6 +3,7 @@ const CustomException = require('../exceptions/custom_exception');
 const sequelize = require('../databases/pg');
 const RedisAuthHelper = require('../helpers/redis_auth_helper');
 const webhookTrigger = require('../utils/webhook_trigger')
+const AgentJunkHandler = require('../utils/agent_junk_handler')
 
 const Logger = require('../utils/logger')
 const logger = new Logger('UserService')
@@ -465,7 +466,8 @@ class UserService {
                 role: "property-user",
                 status: tenant_info.Tenant.status,
             },
-            property.company_info_id
+            property.company_info_id,
+            'create'
         )
         return {
             id: tenant_info.Tenant.id,
@@ -685,7 +687,8 @@ class UserService {
                 role: "property-user",
                 status: updated_user.status
             },
-            property.company_info_id
+            property.company_info_id,
+            'update'
         )
         return {
             id: updated_user.id,
@@ -760,7 +763,8 @@ class UserService {
         //Tirggering the N8N Webhook
         this.vendor_created_or_modified(
             vendor_info.Vendor.id,
-            manager.company_info_id
+            manager.company_info_id,
+            'create'
         )
 
 
@@ -892,7 +896,8 @@ class UserService {
         //Tirggering the N8N Webhook
         this.vendor_created_or_modified(
             vendor.id,
-            manager.company_info_id
+            manager.company_info_id,
+            'update'
         )
         return vendor_updated
 
@@ -1058,15 +1063,24 @@ class UserService {
     // Agent Specific actions ----- END ----- 
 
 
-    //Webhook Trigger
-    async user_created_or_modified(user, company_info_id) {
+    //Storing to Junk DB for the Agent
+    async user_created_or_modified(user, company_info_id, action) {
         try {
             const agent = await Agent.findOne({
                 where: {
                     company_info_id: company_info_id
                 }
             })
-            webhookTrigger.property_user_created(user, agent)
+            // webhookTrigger.property_user_created(user, agent)
+            switch (action) {
+                case 'create':
+                    await AgentJunkHandler.create_user(user, agent.junk_schema_name)
+                    break;
+                case 'update':
+                    await AgentJunkHandler.update_user(user, agent.junk_schema_name)
+                    break;
+
+            }
 
         } catch (e) {
             logger.error(e.message, e)
@@ -1106,14 +1120,23 @@ class UserService {
                 type: vendor.VendorInfo.type,
                 properties: vendor.VendorInfo.Properties.map((property) => { return property.id })
             }
-            console.log(sanitized_vendor)
-            return
             const agent = await Agent.findOne({
                 where: {
                     company_info_id: company_info_id
                 }
             })
-            webhookTrigger.vendor_created(sanitized_vendor, agent)
+
+            // webhookTrigger.vendor_created(sanitized_vendor, agent)
+
+            switch (action) {
+                case 'create':
+                    await AgentJunkHandler.create_user(sanitized_vendor, agent.junk_schema_name)
+                    break;
+                case 'update':
+                    await AgentJunkHandler.update_user(sanitized_vendor, agent.junk_schema_name)
+                    break;
+
+            }
 
         } catch (e) {
             logger.error(e.message, e)

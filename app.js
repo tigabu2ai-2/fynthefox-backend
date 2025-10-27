@@ -9,6 +9,7 @@ const errorHandler = require("./middlewares/error_handler")
 
 
 const sequelize = require('./databases/pg');
+const agent_sequelize = require('./databases/agent_mysql')
 
 const createRoles = require('./seeders/create_roles')
 const createSuperAdmin = require('./seeders/create_super_admin')
@@ -50,6 +51,8 @@ async function initializeApp() {
     try {
         await sequelize.sync({ alter: false , force: false});
         logger.info('Database synced');
+
+        await agent_sequelize.sync()
 
         // Seed roles if they don't exist
         await createRoles();
