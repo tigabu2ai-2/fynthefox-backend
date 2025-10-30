@@ -22,6 +22,26 @@ class PropertyValidator {
         }
         next();
     }
+
+     static validateUpdateroperty(req, res, next) {
+        const schema = Joi.object({
+            name: Joi.string().min(3).max(50).optional(),
+            address: Joi.object({
+                country: Joi.string().min(2).max(50).optional(),
+                state: Joi.string().min(2).max(50).optional(),
+                city: Joi.string().min(2).max(50).optional(),
+                street: Joi.string().min(2).max(100).optional(),
+                zip_code: Joi.string().min(2).max(20).optional(),
+            })
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return ResponseBuilder.validationError(error.details.map(d => d.message)).send(res);
+        }
+        next();
+    }
+
     static validateGetAll(req, res, next) {
         const schema = Joi.object({
             page: Joi.number().min(1).optional(),
