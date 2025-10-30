@@ -115,6 +115,34 @@ class ComplaintValidator {
     }
     next();
   }
+
+  static validateComplaintUpdate(req, res, next) {
+    const schema = Joi.object({
+      status: Joi.string()
+        .valid(...Object.values(ComplainantStatus))
+        .insensitive()
+        .required(),
+      complain: Joi.string().optional(),
+      category: Joi.string()
+        .valid(...Object.values(ComplaintCategories))
+        .insensitive()
+        .required(),
+      urgency: Joi.string()
+        .valid(...Object.values(["high", "medium", "low"]))
+        .insensitive()
+        .optional(),
+      scheduled_date: Joi.date().allow(null).optional(),
+      eta: Joi.date().allow(null).optional(),
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return ResponseBuilder.validationError(
+        error.details.map((d) => d.message)
+      ).send(res);
+    }
+    next();
+  }
 }
 
 module.exports = ComplaintValidator;

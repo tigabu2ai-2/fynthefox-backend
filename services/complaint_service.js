@@ -642,6 +642,31 @@ class ComplaintService {
     return complaint;
   }
 
+  async update(id, data) {
+    const complaint = await Complaint.findByPk(id, {
+      include: {
+        model: Property,
+        attributes: ["name"],
+        include: {
+          model: Address,
+        },
+      },
+    });
+    if (!complaint)
+      throw new CustomException("Complaint/Work-order not found!");
+
+    complaint.status = data.status ?? complaint.status;
+    complaint.complain = data.complain ?? complaint.complain;
+    complaint.category = data.category ?? complaint.category;
+    complaint.urgency = data.urgency ?? complaint.urgency;
+    complaint.scheduled_date = data.scheduled_date ?? complaint.scheduled_date;
+    complaint.eta = data.eta ?? complaint.eta;
+
+    await complaint.save();
+
+    return complaint;
+  }
+
   // Agnet Specifi Actions ------- START -------
   async agentViewAllComplaints(agent_id, query) {
     const agent = await Agent.findByPk(agent_id);
