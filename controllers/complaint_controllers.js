@@ -366,7 +366,7 @@ class ComplaintController {
           req.user.id
         )
       ) {
-        return ResponseBuilder.unauthorized(
+        return ResponseBuilder.forbidden(
           "You are not authorized to access/modifie this work-order"
         ).send(res);
       }
@@ -379,13 +379,12 @@ class ComplaintController {
       ).send(res);
     } catch (e) {
       if (e instanceof CustomException) {
-        return responseBuilder
-          .error(null, e.message)
+        return ResponseBuilder.badRequest(e.message)
           .status(e.statusCode)
           .send(res);
       }
       logger.error(e.message, e);
-      return responseBuilder.error().status(500).send(res);
+      return ResponseBuilder.serverError().send(res);
     }
   }
 
