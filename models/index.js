@@ -17,6 +17,9 @@ const VendorInfo = require("./vendor_info");
 const Estimate = require("./estimate");
 const EstimateItem = require("./estimate_item");
 
+const Invoice = require("./invoice");
+const InvoiceItem = require("./invoice_item");
+
 Address.hasOne(Property, { foreignKey: "address_id", onDelete: "SET NULL" });
 Property.belongsTo(Address, { foreignKey: "address_id" });
 
@@ -174,6 +177,30 @@ Estimate.hasMany(EstimateItem, {
   onDelete: "CASCADE",
 });
 EstimateItem.belongsTo(Estimate, { foreignKey: "estimate_id" });
+
+//Creating association between User(Vendor) and Estimate
+User.hasMany(Estimate, {
+  as: "Vendor",
+  foreignKey: "vendor_id",
+  onDelete: "CASCADE",
+});
+Estimate.belongsTo(User, { foreignKey: "vendor_id" });
+
+//Creating association between Work-Order / Complaint and Invoice
+Complaint.hasMany(Invoice, { foreignKey: "complaint_id", onDelete: "CASCADE" });
+Invoice.belongsTo(Complaint, { foreignKey: "complaint_id" });
+
+//Creating association between Invoice and Invoice-Item
+Invoice.hasMany(InvoiceItem, { foreignKey: "invoice_id", onDelete: "CASCADE" });
+InvoiceItem.belongsTo(Invoice, { foreignKey: "invoice_id" });
+
+//Creating association between User(Vendor) and Invoice
+User.hasMany(Invoice, {
+  as: "Vendor",
+  foreignKey: "vendor_id",
+  onDelete: "CASCADE",
+});
+Invoice.belongsTo(User, { foreignKey: "vendor_id" });
 
 module.exports = {
   User,
