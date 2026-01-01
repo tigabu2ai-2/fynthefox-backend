@@ -217,4 +217,8 @@ module.exports = {
   ChannelPreference,
   CompanyInfo,
   VendorProperty,
+  Estimate,
+  EstimateItem,
+  Invoice,
+  InvoiceItem,
 };
