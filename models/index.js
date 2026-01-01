@@ -187,8 +187,8 @@ User.hasMany(Estimate, {
 Estimate.belongsTo(User, { foreignKey: "vendor_id" });
 
 //Creating association between Work-Order / Complaint and Invoice
-Complaint.hasMany(Invoice, { foreignKey: "complaint_id", onDelete: "CASCADE" });
-Invoice.belongsTo(Complaint, { foreignKey: "complaint_id" });
+Complaint.hasMany(Invoice, { foreignKey: "work_order_id", onDelete: "CASCADE" });
+Invoice.belongsTo(Complaint, { foreignKey: "work_order_id" });
 
 //Creating association between Invoice and Invoice-Item
 Invoice.hasMany(InvoiceItem, { foreignKey: "invoice_id", onDelete: "CASCADE" });
