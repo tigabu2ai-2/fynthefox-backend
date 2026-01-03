@@ -59,16 +59,14 @@ class ComplaintController {
       const requester_id = req.user.id;
       const requester_role = req.user.role;
       const user_id = req.body.user_id;
-      const complain = req.body.complain;
+      const complaint_data = req.body;
+      const property_id = complaint_data.property_id;
 
       // const property_id = await agentService.get_property_id(agent_id, req.body.user_id)
-      // // if (!userService.is_resident_of_property(user_id, property_id)) {
-      // //     return ResponseBuilder.badRequest('Invalid user!').send(res)
+      if (!userService.is_resident_of_property(user_id, property_id)) {
+          return ResponseBuilder.badRequest('Invalid user!').send(res)
 
-      // // }
-
-      const complaint_data = req.body;
-      // complaint_data.property_id = property_id
+      }
 
       const complaint = await complaintService.createComplaint_by_owner(
         complaint_data,
