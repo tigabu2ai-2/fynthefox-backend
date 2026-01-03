@@ -24,7 +24,7 @@ ComplaintLog.init({
         allowNull: false
     },
     log_writer_role: {
-        type: DataTypes.ENUM('property-user', 'property-owner', 'agent', 'vendor'),
+        type: DataTypes.ENUM('property-user', 'property-owner', 'property-manager', 'agent', 'vendor'),
         allowNull: false
     },
     log_writer_id: {
