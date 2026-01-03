@@ -36,15 +36,15 @@ router.delete('/delete/property-owners/:id', authenticateAccessToken, authorizeR
 
 // Property-User Specific controllers ----- START -----
 
-router.post('/register/property-users', authenticateAccessToken, authorizeRole(['property-owner']), UserValidator.validatePropertyUserRegistration, UserController.register_user);
+router.post('/register/property-users', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), UserValidator.validatePropertyUserRegistration, UserController.register_user);
 
-router.get('/fetch/property-users', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner']), UserValidator.validateGetAll, UserController.fetch_all_property_users)
+router.get('/fetch/property-users', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner', 'property-manager']), UserValidator.validateGetAll, UserController.fetch_all_property_users)
 
-router.get('/fetch/property-users/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner']), UUIDValidator.paramIDValidator, UserController.fetch_property_user)
+router.get('/fetch/property-users/:id', authenticateAccessToken, authorizeRole(['super-admin', 'admin', 'property-owner', 'property-manager']), UUIDValidator.paramIDValidator, UserController.fetch_property_user)
 
-router.put('/update/property-users/:id', authenticateAccessToken, authorizeRole(['property-owner']), UUIDValidator.paramIDValidator, UserValidator.validatePropertyUserUpdate, UserController.update_property_user)
+router.put('/update/property-users/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), UUIDValidator.paramIDValidator, UserValidator.validatePropertyUserUpdate, UserController.update_property_user)
 
-router.delete('/delete/property-users/:id', authenticateAccessToken, authorizeRole(['property-owner']), UUIDValidator.paramIDValidator, UserController.delete_property_user)
+router.delete('/delete/property-users/:id', authenticateAccessToken, authorizeRole(['property-owner', 'property-manager']), UUIDValidator.paramIDValidator, UserController.delete_property_user)
 
 // Property-User Specific controllers ----- END -----
 
