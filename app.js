@@ -22,6 +22,7 @@ const complaintRoutes = require("./routes/complaint");
 const accountRoutes = require("./routes/account");
 const dashboardRoutes = require("./routes/dashboard");
 const estimateRoutes = require("./routes/estimate");
+const invoiceRoutes = require("./routes/invoice");
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/api/complaints", complaintRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/estimates", estimateRoutes);
+app.use("/api/invoices", invoiceRoutes);
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -57,7 +59,7 @@ if (process.env.NODE_ENV === "development") {
 
 async function initializeApp() {
   try {
-    await sequelize.sync({ alter: false, force: false });
+    await sequelize.sync({ alter: true, force: false });
     logger.info("Database synced");
 
     await agent_sequelize.sync();

@@ -1,6 +1,6 @@
-.env
 node_modules
 *.zip
 logs
 swagger.yaml
 uploads
+config.bat
