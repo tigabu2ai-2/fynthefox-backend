@@ -24,6 +24,12 @@ Estimate.init(
     attachment_url: {
       type: DataTypes.STRING,
     },
+    attachment_mime_type: {
+      type: DataTypes.STRING,
+    },
+    attachment_original_name: {
+      type: DataTypes.STRING,
+    },
     status: {
       type: DataTypes.ENUM("draft", "sent", "approved", "rejected"),
       defaultValue: "draft",
