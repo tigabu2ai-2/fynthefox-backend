@@ -20,7 +20,7 @@ class EstimateController {
         file ?? null
       );
 
-      return ResponseBuilder.created(estimate).send(res);
+      return ResponseBuilder.created({estimate}).send(res);
     } catch (e) {
       const responseBuilder = new ResponseBuilder();
       if (e instanceof CustomException) {

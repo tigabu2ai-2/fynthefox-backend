@@ -674,14 +674,6 @@ class EstimateService {
     return { success: true, message: "Estimate rejected successfully" };
   }
   async update(data, estimate_id, vendor_id, file) {
-    let attachment_data = {};
-    if (file) {
-      attachment_data = {
-        attachment_url: file.path ?? null,
-        attachment_mime_type: file.mimetype ?? null,
-        attachment_original_name: file.originalname ?? null,
-      };
-    }
     const transaction = await sequelize.transaction();
     const estimate = await Estimate.findOne({
       where: { id: estimate_id, vendor_id: vendor_id },
@@ -705,6 +697,16 @@ class EstimateService {
           fs.unlinkSync(file_path);
         }
       }
+    }
+
+    let attachment_data = {};
+    if (file) {
+      attachment_data = {
+        attachment_url: file.path ?? estimate.attachment_url,
+        attachment_mime_type: file.mimetype ?? estimate.attachment_mime_type,
+        attachment_original_name:
+          file.originalname ?? estimate.attachment_original_name,
+      };
     }
 
     await estimate.update(
