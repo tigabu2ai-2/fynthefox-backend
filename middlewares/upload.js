@@ -4,13 +4,22 @@ const path = require("path");
 const storage = multer.diskStorage({
   destination: "uploads/",
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}- ${file.originalname}`);
+    const ext = path.extname(file.originalname);
+    cb(null, `${crypto.randomUUID()}${ext}`);
   },
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = ["application/pdf", "image/jpeg", "image/png"];
-  cb(null, allowed.includes(file.mimetype));
+  const allowed = ["pdf", "jpeg", "jpg", "png"];
+  if (!allowed.includes(file.mimetype.split("/")[1])) {
+    return cb(
+      new multer.MulterError(
+        "LIMIT_UNEXPECTED_FILE",
+        "Invalid file type. Only PDF, JPEG, JPG, and PNG are allowed."
+      )
+    );
+  }
+  cb(null, true);
 };
 
-module.exports = multer({ storage, fileFilter});
+module.exports = multer({ storage, fileFilter });
