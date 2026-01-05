@@ -180,7 +180,7 @@ EstimateItem.belongsTo(Estimate, { foreignKey: "estimate_id" });
 
 //Creating association between User(Vendor) and Estimate
 User.hasMany(Estimate, {
-  as: "Vendor",
+  
   foreignKey: "vendor_id",
   onDelete: "CASCADE",
 });
@@ -196,7 +196,7 @@ InvoiceItem.belongsTo(Invoice, { foreignKey: "invoice_id" });
 
 //Creating association between User(Vendor) and Invoice
 User.hasMany(Invoice, {
-  as: "Vendor",
+ 
   foreignKey: "vendor_id",
   onDelete: "CASCADE",
 });
