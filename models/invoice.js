@@ -14,13 +14,21 @@ Invoice.init(
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
-    tax: {
-      type: DataTypes.DECIMAL(10, 2),
-      defaultValue: 0,
+    currency: {
+      type: DataTypes.STRING(5),
+      defaultValue: "USD",
     },
-    total: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
+    description: {
+      type: DataTypes.TEXT,
+    },
+    attachment_url: {
+      type: DataTypes.STRING,
+    },
+    attachment_mime_type: {
+      type: DataTypes.STRING,
+    },
+    attachment_original_name: {
+      type: DataTypes.STRING,
     },
     status: {
       type: DataTypes.ENUM("draft", "sent", "approved", "rejected"),
