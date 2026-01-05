@@ -15,6 +15,14 @@ const {
 const CustomException = require("../exceptions/custom_exception");
 class EstimateService {
   async create(work_order_id, vendor_id, payload, file) {
+    let attachment_data = {};
+    if (file) {
+      attachment_data = {
+        attachment_url: file.path ?? null,
+        attachment_mime_type: file.mimetype ?? null,
+        attachment_original_name: file.originalname ?? null,
+      };
+    }
     const transaction = await sequelize.transaction();
     const estimate_data = {
       work_order_id: work_order_id,
@@ -22,9 +30,7 @@ class EstimateService {
       amount: payload.amount,
       currency: payload.currency,
       description: payload.description,
-      attachment_url: file.path ?? null,
-      attachment_mime_type: file.mimetype ?? null,
-      attachment_original_name: file.originalname ?? null,
+      ...attachment_data,
     };
     const estimate = await Estimate.create(estimate_data, {
       transaction: transaction,
@@ -668,6 +674,14 @@ class EstimateService {
     return { success: true, message: "Estimate rejected successfully" };
   }
   async update(data, estimate_id, vendor_id, file) {
+    let attachment_data = {};
+    if (file) {
+      attachment_data = {
+        attachment_url: file.path ?? null,
+        attachment_mime_type: file.mimetype ?? null,
+        attachment_original_name: file.originalname ?? null,
+      };
+    }
     const transaction = await sequelize.transaction();
     const estimate = await Estimate.findOne({
       where: { id: estimate_id, vendor_id: vendor_id },
@@ -698,9 +712,7 @@ class EstimateService {
         amount: data.amount ?? estimate.amount,
         currency: data.currency ?? estimate.currency,
         description: data.description ?? estimate.description,
-        attachment_url: file.path ?? null,
-        attachment_mime_type: file.mimetype ?? null,
-        attachment_original_name: file.originalname ?? null,
+        ...attachment_data,
       },
       { transaction: transaction }
     );
