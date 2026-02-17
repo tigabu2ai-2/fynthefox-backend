@@ -72,7 +72,6 @@ async function initializeApp() {
 
     // Seed super admin user if it doesn't exist
     await createSuperAdmin();
-
     const httpServer = app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
     });
@@ -80,7 +79,7 @@ async function initializeApp() {
       logger.error("Server error:", err);
     });
 
-    require("./socket")(httpServer);
+    await require("./socket")(httpServer);
   } catch (e) {
     logger.error("Error during app initialization:", e);
     process.exit(1);
