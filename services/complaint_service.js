@@ -667,6 +667,42 @@ class ComplaintService {
     return complaint;
   }
 
+  async canAccessComplaintChat(user_id, user_role, complaint_id) {
+    if (user_role === "property-manager" || user_role === "property-owner") {
+      const complaint = await Complaint.findByPk(complaint_id, {
+        include: {
+          model: Property,
+          include: {
+            model: CompanyInfo,
+            include: {
+              model: User,
+              as: "PropertyManagers",
+              where: { id: user_id },
+            },
+          },
+        },
+      });
+
+      return !!complaint;
+    } else if (user_role === "property-user") {
+      const complaint = await Complaint.findOne({
+        where: {
+          id: complaint_id,
+          user_id: user_id,
+        },
+      });
+      return !!complaint;
+    } else if (user_role === "vendor") {
+      const complaint = await Complaint.findOne({
+        where: {
+          id: complaint_id,
+          assigned_to: user_id,
+        },
+      });
+      return !!complaint;
+    }
+  }
+
   // Agnet Specifi Actions ------- START -------
   async agentViewAllComplaints(agent_id, query) {
     const agent = await Agent.findByPk(agent_id);
