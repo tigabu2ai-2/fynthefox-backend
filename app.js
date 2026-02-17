@@ -23,6 +23,7 @@ const accountRoutes = require("./routes/account");
 const dashboardRoutes = require("./routes/dashboard");
 const estimateRoutes = require("./routes/estimate");
 const invoiceRoutes = require("./routes/invoice");
+const chatRoutes = require("./routes/chat")
 
 const app = express();
 
@@ -42,6 +43,8 @@ app.use("/api/account", accountRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/estimates", estimateRoutes);
 app.use("/api/invoices", invoiceRoutes);
+app.use("/api/chats", chatRoutes);
+
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -59,7 +62,7 @@ if (process.env.NODE_ENV === "development") {
 
 async function initializeApp() {
   try {
-    await sequelize.sync({ alter: true, force: false });
+    await sequelize.sync({ alter: false, force: false });
     logger.info("Database synced");
 
     await agent_sequelize.sync();
@@ -70,13 +73,14 @@ async function initializeApp() {
     // Seed super admin user if it doesn't exist
     await createSuperAdmin();
 
-    app
-      .listen(PORT, () => {
-        logger.info(`Server is running on port ${PORT}`);
-      })
-      .on("error", (err) => {
-        logger.error("Server error:", err);
-      });
+    const httpServer = app.listen(PORT, () => {
+      logger.info(`Server is running on port ${PORT}`);
+    });
+    httpServer.on("error", (err) => {
+      logger.error("Server error:", err);
+    });
+
+    require("./socket")(httpServer);
   } catch (e) {
     logger.error("Error during app initialization:", e);
     process.exit(1);
