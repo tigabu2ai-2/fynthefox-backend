@@ -20,6 +20,8 @@ const EstimateItem = require("./estimate_item");
 const Invoice = require("./invoice");
 const InvoiceItem = require("./invoice_item");
 
+const ChatMessage = require("./chat_message");
+
 Address.hasOne(Property, { foreignKey: "address_id", onDelete: "SET NULL" });
 Property.belongsTo(Address, { foreignKey: "address_id" });
 
@@ -180,14 +182,16 @@ EstimateItem.belongsTo(Estimate, { foreignKey: "estimate_id" });
 
 //Creating association between User(Vendor) and Estimate
 User.hasMany(Estimate, {
-  
   foreignKey: "vendor_id",
   onDelete: "CASCADE",
 });
 Estimate.belongsTo(User, { foreignKey: "vendor_id" });
 
 //Creating association between Work-Order / Complaint and Invoice
-Complaint.hasMany(Invoice, { foreignKey: "work_order_id", onDelete: "CASCADE" });
+Complaint.hasMany(Invoice, {
+  foreignKey: "work_order_id",
+  onDelete: "CASCADE",
+});
 Invoice.belongsTo(Complaint, { foreignKey: "work_order_id" });
 
 //Creating association between Invoice and Invoice-Item
@@ -196,11 +200,21 @@ InvoiceItem.belongsTo(Invoice, { foreignKey: "invoice_id" });
 
 //Creating association between User(Vendor) and Invoice
 User.hasMany(Invoice, {
- 
   foreignKey: "vendor_id",
   onDelete: "CASCADE",
 });
 Invoice.belongsTo(User, { foreignKey: "vendor_id" });
+
+//Creating association between Users (sender) and ChatMessage
+User.hasMany(ChatMessage, { foreignKey: "sender_id", onDelete: "CASCADE" });
+ChatMessage.belongsTo(User, { foreignKey: "sender_id" });
+
+//Creating association between Complaint and ChatMessage
+Complaint.hasMany(ChatMessage, {
+  foreignKey: "complaint_id",
+  onDelete: "CASCADE",
+});
+ChatMessage.belongsTo(Complaint, { foreignKey: "complaint_id" });
 
 module.exports = {
   User,
@@ -221,4 +235,5 @@ module.exports = {
   EstimateItem,
   Invoice,
   InvoiceItem,
+  ChatMessage,
 };
