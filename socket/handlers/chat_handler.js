@@ -37,12 +37,12 @@ module.exports = (io) => {
         await complaintService.fetchComplaintDetailInfo(complaint_id);
       if (!complaint) return;
 
-      const saved = await chatService.saveMessage({
+      const saved = await chatService.saveMessage(
         complaint_id,
-        sender_id: socket.user.id,
-        sender_role: socket.user.role,
+        socket.user.role,
+        socket.user.id,
         message,
-      });
+      );
 
       io.to(room(complaint_id)).emit("new_message", saved);
     });
