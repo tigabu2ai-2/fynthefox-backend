@@ -8,6 +8,7 @@ const {
   Address,
   VendorInfo,
   Agent,
+  CompanyInfo
 } = require("../models/index");
 const CustomException = require("../exceptions/custom_exception");
 const sequelize = require("../databases/pg");
@@ -674,6 +675,7 @@ class ComplaintService {
           model: Property,
           include: {
             model: CompanyInfo,
+            as:"CompanyInfo",
             include: {
               model: User,
               as: "PropertyManagers",
