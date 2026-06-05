@@ -4,3 +4,4 @@ logs
 swagger.yaml
 uploads
 config.bat
+.env
